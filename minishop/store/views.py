@@ -81,7 +81,14 @@ def register_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            # Prefer cleaned_data email if form provides it, otherwise fall back to POST
+            email = form.cleaned_data.get('email') if hasattr(form, 'cleaned_data') else None
+            if not email:
+                email = request.POST.get('email')
+            if email:
+                user.email = email
+            user.save()
             auth_login(request, user)
             return redirect('home')
     else:
@@ -166,21 +173,80 @@ def add_to_cart(request, product_id):
 
 def update_cart(request, product_id):
     cart = Cart(request)
-    
+
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 0))
-        if quantity > 0:
-            cart.update(product_id, quantity)
-        else:
+        try:
+            quantity = int(request.POST.get('quantity', 0))
+        except (TypeError, ValueError):
+            quantity = 0
+
+        product = get_object_or_404(Product, id=product_id, status='ACTIVE')
+
+        # Validate stock
+        if quantity < 1:
+            # treat as remove
             cart.remove(product_id)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'cart_count': len(cart), 'cart_total': str(cart.get_total())})
+            messages.success(request, 'Item removed from cart')
+            return redirect('cart')
+
+        if product.stock is not None and quantity > product.stock:
+            msg = f'Only {product.stock} left in stock for {product.name}'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': msg}, status=400)
+            messages.error(request, msg)
+            return redirect('cart')
+
+        # Update cart
+        cart.update(product_id, quantity)
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            # compute item total
+            item_total = None
+            try:
+                item_price = None
+                item_data = cart.cart.get(str(product_id))
+                if item_data:
+                    item_price = item_data.get('price')
+                    item_qty = item_data.get('quantity', 0)
+                    from decimal import Decimal
+                    item_total = str(Decimal(item_price) * int(item_qty))
+            except Exception:
+                item_total = None
+
+            return JsonResponse({
+                'success': True,
+                'item_total': item_total,
+                'cart_count': len(cart),
+                'cart_total': str(cart.get_total())
+            })
+
         messages.success(request, 'Cart updated')
-    
+
     return redirect('cart')
 
 def remove_from_cart(request, product_id):
     cart = Cart(request)
-    cart.remove(product_id)
-    messages.success(request, 'Item removed from cart')
+    if request.method == 'POST':
+        cart.remove(product_id)
+        # If AJAX, return JSON so frontend can update without reload
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'cart_count': len(cart),
+                'cart_total': str(cart.get_total())
+            })
+        messages.success(request, 'Item removed from cart')
+    return redirect('cart')
+
+
+def clear_cart(request):
+    """Clear all items from the session cart."""
+    cart = Cart(request)
+    if request.method == 'POST':
+        cart.clear()
+        messages.success(request, 'Cart cleared')
     return redirect('cart')
 
 def checkout_view(request):

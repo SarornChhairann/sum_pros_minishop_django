@@ -8,13 +8,6 @@
     <!-- Page Header -->
     <div class="row mb-5">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Wishlist</li>
-                </ol>
-            </nav>
-            
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <h1 class="mb-2">My Wishlist</h1>
@@ -297,16 +290,15 @@
                 }).then(confirmed => {
                     if (!confirmed) return;
 
-                    // For each selected product, call the remove endpoint
+                    // For each selected product, call the remove endpoint WITHOUT prompting again
                     productIds.forEach(id => {
                         const item = document.querySelector(`.wishlist-item[data-id="${id}"]`);
                         const url = `/wishlist/remove/${id}/`;
-                        ajaxRemove(id, url, item);
+                        ajaxRemoveConfirmed(id, url, item);
                     });
 
-                    // After initiating removals, clear selection UI
+                    // After initiating removals, clear selection UI (actual counts update when removals complete)
                     checkboxes.forEach(cb => cb.checked = false);
-                    updateSelectedCount();
                 });
             });
         }
@@ -349,19 +341,16 @@
     const csrftoken = getCookie('csrftoken');
 
     // Attach AJAX remove handlers to remove buttons
-    function ajaxRemove(productId, url, el) {
-        showConfirm({ title: 'Remove item', message: 'Remove this item from wishlist?', confirmText: 'Remove', cancelText: 'Cancel' }).then(confirmed => {
-            if (!confirmed) return;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrftoken,
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            }).then(async response => {
+    function ajaxRemoveConfirmed(productId, url, el) {
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken,
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        }).then(async response => {
             let data = {};
             try { data = await response.json(); } catch (e) {}
 
@@ -388,15 +377,34 @@
                     if (newCount > 0) badge.textContent = newCount; else badge.remove();
                 }
 
-                // Update header count in page
-                const headerCount = document.querySelector('.text-muted i.bi-heart-fill ~ span');
-                // (optional) update any other count displays
+                // Recompute selected counts and button states on page
+                const selectedCountEl = document.getElementById('selectedCount');
+                const removeSelectedBtn = document.getElementById('removeSelectedBtn');
+                const moveToCartBtn = document.getElementById('moveToCartBtn');
+                const selected = document.querySelectorAll('.product-check:checked');
+                const count = selected.length;
+                if (selectedCountEl) selectedCountEl.textContent = count;
+                if (removeSelectedBtn) {
+                    removeSelectedBtn.disabled = count === 0;
+                    removeSelectedBtn.innerHTML = count > 0 ? `<i class="bi bi-trash me-1"></i>Remove (${count})` : `<i class="bi bi-trash me-1"></i>Remove Selected`;
+                }
+                if (moveToCartBtn) {
+                    moveToCartBtn.disabled = count === 0;
+                    moveToCartBtn.innerHTML = count > 0 ? `<i class="bi bi-cart-check me-1"></i>Move ${count} to Cart` : `<i class="bi bi-cart-check me-1"></i>Move to Cart`;
+                }
+
             } else {
                 showToast(data.error || 'Could not remove item', 'danger');
             }
-            }).catch(err => {
-                showToast('Network error', 'danger');
-            });
+        }).catch(err => {
+            showToast('Network error', 'danger');
+        });
+    }
+
+    function ajaxRemove(productId, url, el) {
+        showConfirm({ title: 'Remove item', message: 'Remove this item from wishlist?', confirmText: 'Remove', cancelText: 'Cancel' }).then(confirmed => {
+            if (!confirmed) return;
+            ajaxRemoveConfirmed(productId, url, el);
         });
     }
 

@@ -149,6 +149,45 @@
         background: rgba(99, 102, 241, 0.1);
         color: var(--primary);
     }
+
+    /* button primary */
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .btn-primary::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .btn-primary:focus:not(:active)::after {
+        animation: ripple 1s ease-out;
+    }
     
     .search-box {
         position: relative;
@@ -753,6 +792,107 @@
         animation: float 3s ease-in-out infinite;
     }
 
+    .cart-item {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .cart-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08) !important;
+        border-color: var(--primary);
+    }
+    
+    .cart-item-title:hover {
+        color: var(--primary) !important;
+    }
+    
+    .quantity-controls .btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+    
+    .quantity-controls .btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .qty-input {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        font-weight: 500;
+    }
+    
+    .qty-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+    
+    .order-summary {
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    }
+    
+    .order-summary h4 {
+        font-weight: 700;
+        color: var(--dark);
+    }
+    
+    .checkout-action .btn {
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .checkout-action .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .empty-cart-icon {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .payment-methods i {
+        font-size: 1.5rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .payment-methods i:hover {
+        transform: scale(1.2);
+    }
+    
+    @media (max-width: 576px) {
+        .cart-item .row > div {
+            width: 100%;
+        }
+        
+        .cart-item-image {
+            text-align: center;
+        }
+        
+        .quantity-controls {
+            justify-content: center;
+        }
+        
+        .cart-item-actions {
+            text-align: center;
+        }
+    }
+
     @keyframes float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-10px); }
@@ -806,7 +946,25 @@
             min-width: 100%;
             justify-content: center;
         }
+
+        .cart-item {
+            padding: 1rem !important;
+        }
+        
+        .cart-item-image {
+            margin-bottom: 1rem;
+        }
+        
+        .cart-item-actions {
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .quantity-controls {
+            justify-content: center !important;
+        }
     }
+
 
     @media (max-width: 480px) {
         .product-grid {

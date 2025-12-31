@@ -69,13 +69,6 @@
                     <span class="review-count">(0)</span>
                 </div>
                 
-                <!-- Product meta: move price next to name for easier scanning -->
-                <div class="product-meta">
-                    <div class="price-display">
-                        <span class="price-value">${{ product.price }}</span>
-                    </div>
-                </div>
-                
                 <!-- Add to Cart Section -->
                 <div class="add-to-cart-section">
                     {% if product.is_available %}
@@ -182,12 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.created) {
                         self.classList.add('active');
                         icon.classList.replace('bi-heart', 'bi-heart-fill');
-                        showToast('Added to Wishlist', 'Product saved to your wishlist');
+                        showToast('Added to Wishlist', 'Product saved to your wishlist', 'success');
                     } else {
                         // already in wishlist -> toggle visual
                         self.classList.add('active');
                         icon.classList.replace('bi-heart', 'bi-heart-fill');
-                        showToast('Already in Wishlist', 'This product is already in your wishlist');
+                        showToast('Already in Wishlist', 'This product is already in your wishlist', 'info');
                     }
 
                     // Update wishlist navbar badge (create/remove if needed)
@@ -211,10 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 } else {
-                    showToast('Wishlist Error', data.error || 'Could not update wishlist');
+                    showToast('Wishlist Error', data.error || 'Could not update wishlist', 'danger');
                 }
             }).catch(err => {
-                showToast('Network Error', 'Unable to reach server');
+                showToast('Network Error', 'Unable to reach server','danger');
             });
         });
     });
