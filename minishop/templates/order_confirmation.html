@@ -287,17 +287,10 @@
             <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5">
                 <i class="bi bi-house-door me-2"></i>Continue Shopping
             </a>
-            <a href="{% url 'order_tracking' order.id %}" class="btn btn-outline-primary btn-lg px-5">
-                <i class="bi bi-truck me-2"></i>Track Order
-            </a>
             <button onclick="window.print()" class="btn btn-outline-secondary btn-lg px-5">
                 <i class="bi bi-printer me-2"></i>Print Receipt
             </button>
         </div>
-        <p class="text-muted mt-4">
-            Need help? <a href="{% url 'contact' %}" class="text-decoration-none">Contact Support</a> 
-            or call us at 1-800-ORDER-NOW
-        </p>
     </div>
 </div>
 

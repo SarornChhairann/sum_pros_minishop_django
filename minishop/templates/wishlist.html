@@ -274,16 +274,6 @@
         const toastMessage = document.getElementById('toast-message');
         const toast = toastEl ? new bootstrap.Toast(toastEl, { delay: 3000 }) : null;
 
-        // Confirm dialog function
-        function showConfirm({ title, message, confirmText, cancelText }) {
-            return new Promise((resolve) => {
-                // Using browser's native confirm for simplicity
-                // In a real app, you might want to use a custom modal
-                const confirmed = confirm(`${title}\n\n${message}`);
-                resolve(confirmed);
-            });
-        }
-
         // Update selected count
         function updateSelectedCount() {
             const selected = document.querySelectorAll('.product-check:checked');

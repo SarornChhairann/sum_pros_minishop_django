@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container py-4">
-    
     {% if products %}
     <div class="product-grid">
         {% for product in products %}
@@ -22,27 +21,53 @@
                 <div class="image-overlay"></div>
                 
                 <!-- Stock badge placed on image (bottom-left) -->
-                <span class="badge badge-stock stock-on-image">
-                    {% if product.stock is not None and product.stock|add:'0' != '0' %}
-                        {{ product.stock }} left
+                <div class="position-absolute start-0 bottom-0 m-2">
+                    {% if product.is_available %}
+                        {% if product.stock is not None and product.stock|add:'0' != '0' %}
+                            {% with stock_num=product.stock|add:'0' %}
+                            {% if stock_num > 10 %}
+                            <span class="badge bg-success badge-stock">
+                                <i class="bi bi-check-circle me-1"></i>In Stock
+                            </span>
+                            {% elif stock_num > 0 %}
+                            <span class="badge bg-warning text-dark badge-stock">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Only {{ stock_num }} Left
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger badge-stock">
+                                <i class="bi bi-x-circle me-1"></i>Out of Stock
+                            </span>
+                            {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="badge bg-success badge-stock">
+                                <i class="bi bi-check-circle me-1"></i>In Stock
+                            </span>
+                        {% endif %}
                     {% else %}
-                        {% if product.is_available %}In Stock{% else %}Out of Stock{% endif %}
+                        <span class="badge bg-danger badge-stock">
+                            <i class="bi bi-x-circle me-1"></i>Out of Stock
+                        </span>
                     {% endif %}
-                </span>
+                </div>
                 
                 <!-- Quick Actions -->
                 <div class="quick-actions">
-                    <button class="action-btn wishlist-btn{% if user.is_authenticated and product.id in user_wishlist_product_ids %} active{% endif %}" data-id="{{ product.id }}" data-url="{% url 'add_to_wishlist' product.id %}">
+                    <button class="action-btn wishlist-btn{% if user.is_authenticated and product.id in user_wishlist_product_ids %} active{% endif %}" 
+                            data-id="{{ product.id }}" 
+                            data-url="{% url 'add_to_wishlist' product.id %}"
+                            title="Add to Wishlist">
                         <i class="bi {% if user.is_authenticated and product.id in user_wishlist_product_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
                     </button>
                     <button class="action-btn quickview-btn"
-                            data-url="{% url 'product_detail' product.id %}">
+                            data-url="{% url 'product_detail' product.id %}"
+                            title="Quick View">
                         <i class="bi bi-eye"></i>
                     </button>
                 </div>
             </div>
             
-                <!-- Card Body -->
+            <!-- Card Body -->
             <div class="card-body">
                 <div class="product-meta">
                     <div class="product-header">
@@ -58,7 +83,6 @@
                 <!-- Rating -->
                 <div class="rating">
                     <div class="stars">
-                        <!-- If you add rating to your model, update this -->
                         <i class="bi bi-star-fill star"></i>
                         <i class="bi bi-star-fill star"></i>
                         <i class="bi bi-star-fill star"></i>
@@ -120,11 +144,110 @@
     {% endif %}
 </div>
 
-<!-- Global toasts handled by base.html -->
+<style>
+    /* Stock Badge Styles */
+    .badge-stock {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .badge-stock.bg-success {
+        background: linear-gradient(135deg, #198754, #20c997) !important;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .badge-stock.bg-warning {
+        background: linear-gradient(135deg, #ffc107, #fd7e14) !important;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .badge-stock.bg-danger {
+        background: linear-gradient(135deg, #dc3545, #e83e8c) !important;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .badge-stock i {
+        font-size: 0.7rem;
+    }
+    
+    /* Wishlist Button Loading State */
+    .wishlist-btn {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .wishlist-btn.active {
+        background-color: #dc3545;
+        color: white;
+        animation: pulse 0.5s ease;
+    }
+    
+    .wishlist-btn.active:hover {
+        background-color: #bb2d3b;
+        transform: scale(1.1);
+    }
+    
+    .wishlist-btn.loading {
+        pointer-events: none;
+    }
+    
+    .wishlist-btn.loading i {
+        opacity: 0;
+    }
+    
+    .wishlist-btn.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    .wishlist-btn.active.loading::after {
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Quick Actions Positioning */
+    .quick-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .product-image-wrapper:hover .quick-actions {
+        opacity: 1;
+    }
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Wishlist functionality (POST -> add to DB; handles anonymous via JSON 401)
+    // CSRF Token Helper
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -142,14 +265,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const csrftoken = getCookie('csrftoken');
 
+    // Improved Wishlist functionality with loading state
     document.querySelectorAll('.wishlist-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const url = this.dataset.url;
             const icon = this.querySelector('i');
             const self = this;
-
+            
             if (!url) return;
-
+            
+            // Show loading state
+            self.classList.add('loading');
+            self.disabled = true;
+            
             fetch(url, {
                 method: 'POST',
                 headers: {
@@ -159,11 +287,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 credentials: 'same-origin'
             }).then(async response => {
+                // Remove loading state
+                self.classList.remove('loading');
+                self.disabled = false;
+                
                 let data = {};
-                try { data = await response.json(); } catch (e) { /* ignore */ }
+                try { 
+                    data = await response.json(); 
+                } catch (e) { 
+                    console.error('Failed to parse response:', e);
+                }
 
+                // Handle authentication redirect
                 if (response.status === 401 || data.login_required) {
-                    // Redirect to login (preserve next)
                     const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
                     window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
                     return;
@@ -171,44 +307,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (response.ok && data.success) {
                     if (data.created) {
+                        // Added to wishlist
                         self.classList.add('active');
-                        icon.classList.replace('bi-heart', 'bi-heart-fill');
-                        showToast('Added to Wishlist', 'Product saved to your wishlist', 'success');
-                    } else {
-                        // already in wishlist -> toggle visual
-                        self.classList.add('active');
-                        icon.classList.replace('bi-heart', 'bi-heart-fill');
-                        showToast('Already in Wishlist', 'This product is already in your wishlist', 'info');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        showToast('Added to Wishlist','Product saved to your wishlist','success');
+                        
                     }
-
-                    // Update wishlist navbar badge (create/remove if needed)
-                    const badge = document.querySelector('.badge-count.wishlist-count');
-                    if (typeof data.wishlist_count !== 'undefined') {
-                        const count = parseInt(data.wishlist_count) || 0;
-                        if (badge) {
-                            if (count > 0) {
-                                badge.textContent = count;
-                            } else {
-                                badge.remove();
-                            }
-                        } else if (count > 0) {
-                            const wishlistIcon = document.querySelector('a[href*="wishlist"]');
-                            if (wishlistIcon) {
-                                const span = document.createElement('span');
-                                span.className = 'badge-count wishlist-count';
-                                span.textContent = count;
-                                wishlistIcon.appendChild(span);
-                            }
-                        }
-                    }
+                    // Update wishlist count in navbar
+                    updateWishlistCount(data.wishlist_count);
+                    
                 } else {
-                    showToast('Wishlist Error', data.error || 'Could not update wishlist', 'danger');
+                    showToast('Wishlist Error',data.error || 'Could not update wishlist', 'danger');
                 }
             }).catch(err => {
-                showToast('Network Error', 'Unable to reach server','danger');
+                // Remove loading state on error
+                self.classList.remove('loading');
+                self.disabled = false;
+                
+                showToast('Network Error','Unable to reach server. Please check your connection.', 'danger');
+                console.error('Wishlist error:', err);
             });
         });
     });
+
+    // Helper function to update wishlist count
+    function updateWishlistCount(count) {
+        const badge = document.querySelector('.badge-count.wishlist-count');
+        if (typeof count !== 'undefined') {
+            const wishlistCount = parseInt(count) || 0;
+            
+            if (wishlistCount > 0) {
+                if (badge) {
+                    badge.textContent = wishlistCount;
+                } else {
+                    // Create badge if it doesn't exist
+                    const wishlistLink = document.querySelector('a[href*="wishlist"]');
+                    if (wishlistLink) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'badge-count wishlist-count';
+                        newBadge.textContent = wishlistCount;
+                        wishlistLink.appendChild(newBadge);
+                    }
+                }
+            } else {
+                // Remove badge if count is 0
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        }
+    }
 
     // Quick view functionality
     document.querySelectorAll('.quickview-btn').forEach(btn => {
@@ -245,12 +394,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.value = min;
             } else if (value > max) {
                 this.value = max;
-                showToast('Maximum Reached', `Only ${max} items available in stock`);
+                showToast('Maximum Reached', `Only ${max} items available in stock`,'warning');
             }
         });
     });
 
-    // Intercept add-to-cart forms and submit via AJAX to avoid page reload
+    // Add to cart AJAX functionality (keeping existing)
     document.querySelectorAll('.add-to-cart-form').forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -300,18 +449,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
 
-                    // Optionally update any cart total display
-                    showToast('Added to cart', `${formData.get('quantity') || 1} item(s) added`, 'success');
+                    // Show success toast
+                    showToast('Added to Cart',`${formData.get('quantity') || 1} item(s) added to your cart`,'success');
                 } else {
-                    showToast('Add to cart failed', data.error || 'Could not add item', 'danger');
+                    showToast('Add to Cart Failed',data.error || 'Could not add item to cart','danger');
                 }
             }).catch(err => {
                 if (submitBtn) submitBtn.classList.remove('adding');
-                showToast('Network Error', 'Unable to reach server', 'danger');
+                showToast('Network Error','Unable to reach server. Please check your connection.','danger');
             });
         });
     });
-
 });
 </script>
 {% endblock %}
