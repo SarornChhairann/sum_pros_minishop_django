@@ -1,38 +1,520 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 
+{% block title %}Checkout - MiniShop{% endblock %}
+
 {% block content %}
-<div class="row p-4">
-    <div class="col-md-8">
-        <h2 class="mb-4">Checkout</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <button type="submit" class="btn btn-primary btn-lg mt-3 mb-3">
-                Place Order
-            </button>
-        </form>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Order Summary</h5>
+<div class="container py-5">
+    <!-- Progress Steps -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="d-flex justify-content-center">
+                <div class="progress-steps w-75">
+                    <div class="step completed">
+                        <div class="step-circle">1</div>
+                        <div class="step-label">Cart</div>
+                    </div>
+                    <div class="step active">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Checkout</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Confirmation</div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    {% for item in cart %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ item.product.name }} x {{ item.quantity }}</span>
-                        <span>${{ item.total_price|floatformat:2 }}</span>
-                    </li>
-                    {% endfor %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <strong>Total</strong>
-                        <strong>${{ cart.get_total|floatformat:2 }}</strong>
-                    </li>
-                </ul>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Order Summary Card -->
+        <div class="col-lg-4 order-lg-2">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-receipt me-2"></i>Order Summary
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Cart Items -->
+                    <div class="p-3 border-bottom">
+                        <div class="d-flex justify-content-between mb-2">
+                            <small class="text-muted">Items ({{ cart|length }})</small>
+                            <a href="{% url 'cart' %}" class="text-decoration-none">
+                                <small><i class="bi bi-pencil me-1"></i>Edit</small>
+                            </a>
+                        </div>
+                        {% for item in cart %}
+                        <div class="d-flex align-items-center mb-3">
+                            {% if item.product.image_url_or_file %}
+                            <img src="{{ item.product.image_url_or_file }}" 
+                                 class="rounded me-3" 
+                                 alt="{{ item.product.name }}"
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="bi bi-image text-muted"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1" style="font-size: 0.9rem;">{{ item.product.name }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Qty: {{ item.quantity }}</small>
+                                    <strong class="text-primary">${{ item.total_price|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal</span>
+                            <span>${{ cart.get_total|floatformat:2 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping</span>
+                            <span class="text-success">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax</span>
+                            <span>${{ cart.get_tax|floatformat:2 }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5 class="mb-0">Total</h5>
+                            <h4 class="text-primary mb-0">${{ cart.get_total_with_tax|floatformat:2 }}</h4>
+                        </div>
+                        
+                        <!-- Payment Methods -->
+                        <div class="mt-4">
+                            <h6 class="mb-3"><i class="bi bi-shield-check me-2"></i>Secure Payment</h6>
+                            <div class="d-flex gap-2 mb-3">
+                                <div class="payment-method active">
+                                    <i class="bi bi-credit-card"></i>
+                                    <span>Card</span>
+                                </div>
+                                <div class="payment-method">
+                                    <i class="bi bi-paypal"></i>
+                                    <span>PayPal</span>
+                                </div>
+                                <div class="payment-method">
+                                    <i class="bi bi-bank"></i>
+                                    <span>Bank</span>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-lock me-1"></i>
+                                    Your payment is secured with 256-bit SSL encryption
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="col-lg-8 order-lg-1">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-truck me-2"></i>Shipping Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="checkoutForm">
+                        {% csrf_token %}
+                        
+                        <!-- Personal Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3 border-bottom pb-2">Contact Details</h6>
+                            </div>
+                            {% for field in form %}
+                                {% if field.name in 'first_name,last_name,email,phone' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ field.errors|join:", " }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3 border-bottom pb-2">Shipping Address</h6>
+                            </div>
+                            {% for field in form %}
+                                {% if field.name in 'address,apartment,city,state,zip_code,country' %}
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                        {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ field.errors|join:", " }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- Order Notes -->
+                        <div class="mb-4">
+                            <h6 class="mb-3 border-bottom pb-2">Additional Information</h6>
+                            {% for field in form %}
+                                {% if field.name == 'notes' %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <!-- Payment Information -->
+                        <div class="mb-4">
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="mb-3 border-bottom pb-2">Payment Details</h6>
+                                </div>
+                                {% for field in form %}
+                                    {% if field.name in 'payment_method,card_number,card_expiry,card_cvc' %}
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ field.id_for_label }}" class="form-label">
+                                            {{ field.label }}
+                                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                        </label>
+                                        {{ field }}
+                                        {% if field.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ field.errors|join:", " }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Terms and Submit -->
+                        <div class="border-top pt-4 mt-4">
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                                <label class="form-check-label" for="termsCheck">
+                                    I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and 
+                                    <a href="#" class="text-decoration-none">Privacy Policy</a>
+                                </label>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg py-3" id="submitBtn">
+                                    <i class="bi bi-lock-fill me-2"></i>
+                                    Place Order • ${{ cart.get_total_with_tax|floatformat:2 }}
+                                </button>
+                                <p class="text-center text-muted mt-3 mb-0">
+                                    <i class="bi bi-arrow-left me-1"></i>
+                                    <a href="{% url 'cart' %}" class="text-decoration-none">Return to cart</a>
+                                </p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security & Trust Badges -->
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card border-0 h-100 text-center p-3">
+                        <i class="bi bi-shield-check text-success" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2 mb-1">Secure Checkout</h6>
+                        <small class="text-muted">256-bit SSL encryption</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 h-100 text-center p-3">
+                        <i class="bi bi-arrow-clockwise text-primary" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2 mb-1">30-Day Returns</h6>
+                        <small class="text-muted">Easy return policy</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 h-100 text-center p-3">
+                        <i class="bi bi-headset text-info" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2 mb-1">24/7 Support</h6>
+                        <small class="text-muted">Dedicated customer service</small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Progress Steps */
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
+    
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background-color: #e9ecef;
+        z-index: 1;
+    }
+    
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        margin-bottom: 8px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .step.active .step-circle {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    
+    .step.completed .step-circle {
+        background-color: #198754;
+        color: white;
+        border-color: #198754;
+    }
+    
+    .step-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .step.active .step-label {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .step.completed .step-label {
+        color: #198754;
+    }
+    
+    /* Payment Methods */
+    .payment-method {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .payment-method:hover {
+        border-color: #0d6efd;
+    }
+    
+    .payment-method.active {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .payment-method i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .payment-method span {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    /* Form Styling */
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.1);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+    
+    /* Card Styling */
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .progress-steps {
+            width: 100%;
+        }
+        
+        .step-label {
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Submit Button */
+    #submitBtn {
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    #submitBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    }
+    
+    /* Cart Item Image */
+    .card-body img {
+        transition: transform 0.3s ease;
+    }
+    
+    .card-body img:hover {
+        transform: scale(1.05);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.getElementById('checkoutForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                const termsCheck = document.getElementById('termsCheck');
+                
+                if (!termsCheck.checked) {
+                    e.preventDefault();
+                    alert('Please agree to the Terms of Service and Privacy Policy');
+                    termsCheck.focus();
+                    return false;
+                }
+                
+                // Add loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Processing Order...
+                `;
+            });
+        }
+        
+        // Payment method selection
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', function() {
+                document.querySelectorAll('.payment-method').forEach(m => {
+                    m.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Update payment method field if it exists
+                const paymentField = document.querySelector('select[name="payment_method"]');
+                if (paymentField) {
+                    const methodType = this.querySelector('span').textContent.toLowerCase();
+                    const option = Array.from(paymentField.options).find(opt => 
+                        opt.text.toLowerCase().includes(methodType)
+                    );
+                    if (option) {
+                        paymentField.value = option.value;
+                    }
+                }
+            });
+        });
+        
+        // Format card number
+        const cardNumberField = document.querySelector('input[name="card_number"]');
+        if (cardNumberField) {
+            cardNumberField.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                let formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+                e.target.value = formatted;
+            });
+        }
+        
+        // Format card expiry
+        const cardExpiryField = document.querySelector('input[name="card_expiry"]');
+        if (cardExpiryField) {
+            cardExpiryField.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+                if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                }
+                e.target.value = value;
+            });
+        }
+        
+        // Show/hide card fields based on payment method
+        const paymentMethodSelect = document.querySelector('select[name="payment_method"]');
+        if (paymentMethodSelect) {
+            paymentMethodSelect.addEventListener('change', function() {
+                const cardFields = document.querySelectorAll('input[name="card_number"], input[name="card_expiry"], input[name="card_cvc"]');
+                const isCard = this.value === 'credit_card' || this.value === 'debit_card';
+                
+                cardFields.forEach(field => {
+                    field.closest('.col-md-6').style.display = isCard ? 'block' : 'none';
+                });
+            });
+            
+            // Trigger change on load
+            paymentMethodSelect.dispatchEvent(new Event('change'));
+        }
+    });
+</script>
 {% endblock %}

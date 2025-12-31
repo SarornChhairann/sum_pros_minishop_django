@@ -1,29 +1,554 @@
 {% extends 'base.html' %}
 
+{% block title %}Order Confirmed - MiniShop{% endblock %}
+
 {% block content %}
-<div class="text-center py-5">
-    <div class="display-1 text-success mb-4">
-        <i class="bi bi-check-circle"></i>
-    </div>
-    <h1 class="mb-4">Order Confirmed!</h1>
-    <div class="card mx-auto" style="max-width: 500px;">
-        <div class="card-body">
-            <h5 class="card-title">Order #{{ order.id }}</h5>
-            <div class="text-start">
-                <p><strong>Customer:</strong> {{ order.customer_name }}</p>
-                <p><strong>Email:</strong> {{ order.customer_email }}</p>
-                <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
-                <p><strong>Shipping Address:</strong><br>{{ order.shipping_address }}</p>
-                <hr>
-                <h4 class="text-primary">Total: ${{ order.total_amount }}</h4>
-                <p class="text-muted">Order Date: {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+<div class="container py-5">
+    <!-- Confirmation Header -->
+    <div class="text-center mb-5">
+        <div class="confirmation-animation mb-4">
+            <div class="confirmation-circle">
+                <i class="bi bi-check-lg"></i>
+            </div>
+            <div class="confirmation-ring"></div>
+        </div>
+        <h1 class="display-5 fw-bold mb-3">Order Confirmed!</h1>
+        <p class="lead text-muted mb-4">Thank you for your purchase. Your order is being processed.</p>
+        
+        <!-- Order Status Timeline -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-8 col-lg-6">
+                <div class="order-timeline">
+                    <div class="timeline-step active">
+                        <div class="timeline-icon">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Order Placed</h6>
+                            <small class="text-muted">Just now</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Processing</h6>
+                            <small class="text-muted">Within 24 hours</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-icon">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Shipped</h6>
+                            <small class="text-muted">1-2 business days</small>
+                        </div>
+                    </div>
+                    <div class="timeline-step">
+                        <div class="timeline-icon">
+                            <i class="bi bi-house-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Delivered</h6>
+                            <small class="text-muted">3-5 business days</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="mt-4">
-        <a href="{% url 'home' %}" class="btn btn-primary">
-            Continue Shopping
-        </a>
+
+    <!-- Order Details Cards -->
+    <div class="row g-4 mb-5">
+        <!-- Order Summary Card -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-receipt text-primary me-2"></i>
+                            Order Summary
+                        </h5>
+                        <span class="badge bg-success bg-opacity-10 text-success py-2 px-3">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Order #{{ order.id }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Order Items -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Order Items</h6>
+                        {% for item in order.orderitem_set.all %}
+                        <div class="order-item d-flex align-items-center mb-3 p-3 border rounded">
+                            {% if item.product.image_url_or_file %}
+                            <img src="{{ item.product.image_url_or_file }}" 
+                                 class="rounded me-3" 
+                                 alt="{{ item.product.name }}"
+                                 style="width: 80px; height: 80px; object-fit: cover;">
+                            {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 80px; height: 80px;">
+                                <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ item.product.name }}</h6>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">Quantity: {{ item.quantity }}</small>
+                                        <small class="text-muted ms-3">Price: ${{ item.price|floatformat:2 }}</small>
+                                    </div>
+                                    <strong class="text-primary">${{ item.total|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="border-top pt-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="price-breakdown mb-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal</span>
+                                        <span>${{ order.subtotal|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Shipping</span>
+                                        <span class="text-success">${{ order.shipping_cost|floatformat:2 }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Tax</span>
+                                        <span>${{ order.tax_amount|floatformat:2 }}</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <h5 class="mb-0">Total</h5>
+                                        <h4 class="text-primary mb-0">${{ order.total_amount|floatformat:2 }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="payment-info">
+                                    <h6 class="mb-3">Payment Information</h6>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="payment-icon bg-primary bg-opacity-10 p-2 rounded me-3">
+                                            <i class="bi bi-credit-card text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Payment Method</small>
+                                            <strong>{{ order.payment_method|default:"Credit Card" }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="payment-icon bg-success bg-opacity-10 p-2 rounded me-3">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="text-muted d-block">Payment Status</small>
+                                            <strong class="text-success">Paid</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer & Shipping Info Card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-person-circle text-primary me-2"></i>
+                        Customer Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Customer Details -->
+                    <div class="customer-details mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="avatar bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                <i class="bi bi-person text-primary"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ order.customer_name }}</h6>
+                                <small class="text-muted">Customer</small>
+                            </div>
+                        </div>
+                        <div class="info-row mb-2">
+                            <i class="bi bi-envelope text-muted me-2"></i>
+                            <span>{{ order.customer_email }}</span>
+                        </div>
+                        <div class="info-row mb-2">
+                            <i class="bi bi-telephone text-muted me-2"></i>
+                            <span>{{ order.customer_phone }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="bi bi-calendar text-muted me-2"></i>
+                            <span>{{ order.created_at|date:"F j, Y, g:i a" }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div class="shipping-address">
+                        <h6 class="mb-3">
+                            <i class="bi bi-truck text-primary me-2"></i>
+                            Shipping Address
+                        </h6>
+                        <div class="address-card p-3 border rounded">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-geo-alt text-primary me-3 mt-1"></i>
+                                <div>
+                                    <p class="mb-2">{{ order.shipping_address|linebreaksbr }}</p>
+                                    {% if order.shipping_notes %}
+                                    <div class="notes mt-2 p-2 bg-light rounded">
+                                        <small class="text-muted d-block mb-1">Delivery Notes:</small>
+                                        <small>{{ order.shipping_notes }}</small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                    </div>
+
+                    <!-- Estimated Delivery -->
+                    <div class="delivery-estimate mt-4 p-3 bg-light rounded">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-clock text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-1">Estimated Delivery</h6>
+                                <p class="mb-0 text-muted">3-5 business days</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Steps & Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="mb-4 text-center">What's Next?</h5>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="next-step text-center p-3">
+                                <div class="step-icon bg-primary bg-opacity-10 p-3 rounded-circle mx-auto mb-3">
+                                    <i class="bi bi-envelope text-primary" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h6 class="mb-2">Order Confirmation</h6>
+                                <p class="text-muted small mb-0">Check your email for order details</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="next-step text-center p-3">
+                                <div class="step-icon bg-warning bg-opacity-10 p-3 rounded-circle mx-auto mb-3">
+                                    <i class="bi bi-clock text-warning" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h6 class="mb-2">Order Processing</h6>
+                                <p class="text-muted small mb-0">We'll prepare your items for shipping</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="next-step text-center p-3">
+                                <div class="step-icon bg-info bg-opacity-10 p-3 rounded-circle mx-auto mb-3">
+                                    <i class="bi bi-truck text-info" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h6 class="mb-2">Shipping</h6>
+                                <p class="text-muted small mb-0">We'll send tracking info once shipped</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="next-step text-center p-3">
+                                <div class="step-icon bg-success bg-opacity-10 p-3 rounded-circle mx-auto mb-3">
+                                    <i class="bi bi-box-seam text-success" style="font-size: 1.5rem;"></i>
+                                </div>
+                                <h6 class="mb-2">Delivery</h6>
+                                <p class="text-muted small mb-0">Your order will arrive at your doorstep</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center mt-5 pt-4">
+        <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+            <a href="{% url 'home' %}" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-house-door me-2"></i>Continue Shopping
+            </a>
+            <a href="{% url 'order_tracking' order.id %}" class="btn btn-outline-primary btn-lg px-5">
+                <i class="bi bi-truck me-2"></i>Track Order
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-lg px-5">
+                <i class="bi bi-printer me-2"></i>Print Receipt
+            </button>
+        </div>
+        <p class="text-muted mt-4">
+            Need help? <a href="{% url 'contact' %}" class="text-decoration-none">Contact Support</a> 
+            or call us at 1-800-ORDER-NOW
+        </p>
     </div>
 </div>
+
+<style>
+    /* Confirmation Animation */
+    .confirmation-animation {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+    
+    .confirmation-circle {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #198754, #20c997);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        position: relative;
+        z-index: 2;
+        animation: scaleIn 0.5s ease-out;
+    }
+    
+    .confirmation-ring {
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border: 3px solid rgba(25, 135, 84, 0.2);
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes scaleIn {
+        from { transform: scale(0); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        100% { transform: scale(1.1); opacity: 0; }
+    }
+    
+    /* Order Timeline */
+    .order-timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .order-timeline::before {
+        content: '';
+        position: absolute;
+        top: 30px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, 
+            #198754 0%, 
+            #198754 25%, 
+            #e9ecef 25%, 
+            #e9ecef 100%);
+        z-index: 1;
+    }
+    
+    .timeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+        flex: 1;
+    }
+    
+    .timeline-icon {
+        width: 60px;
+        height: 60px;
+        background-color: white;
+        border: 3px solid #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .timeline-step.active .timeline-icon {
+        background-color: #198754;
+        border-color: #198754;
+        color: white;
+        box-shadow: 0 0 0 8px rgba(25, 135, 84, 0.1);
+    }
+    
+    .timeline-content {
+        text-align: center;
+    }
+    
+    .timeline-content h6 {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    /* Order Item Styling */
+    .order-item {
+        transition: all 0.3s ease;
+    }
+    
+    .order-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        border-color: #0d6efd !important;
+    }
+    
+    /* Info Rows */
+    .info-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    /* Address Card */
+    .address-card {
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+    
+    .address-card:hover {
+        background-color: white;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+    }
+    
+    /* Next Steps */
+    .next-step {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+    
+    .next-step:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    /* Avatar */
+    .avatar {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Payment Icon */
+    .payment-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Button Hover Effects */
+    .btn-primary {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    }
+    
+    .btn-outline-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1);
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .order-timeline {
+            flex-direction: column;
+            align-items: flex-start;
+            padding-left: 20px;
+        }
+        
+        .order-timeline::before {
+            top: 0;
+            bottom: 0;
+            left: 30px;
+            width: 3px;
+            height: auto;
+            background: linear-gradient(180deg, 
+                #198754 0%, 
+                #198754 25%, 
+                #e9ecef 25%, 
+                #e9ecef 100%);
+        }
+        
+        .timeline-step {
+            flex-direction: row;
+            width: 100%;
+            margin-bottom: 30px;
+            align-items: flex-start;
+        }
+        
+        .timeline-icon {
+            margin-bottom: 0;
+            margin-right: 15px;
+        }
+        
+        .timeline-content {
+            text-align: left;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add some interactive animations
+        const timelineSteps = document.querySelectorAll('.timeline-step');
+        
+        timelineSteps.forEach((step, index) => {
+            // Add staggered animation
+            setTimeout(() => {
+                step.style.opacity = '1';
+                step.style.transform = 'translateY(0)';
+            }, index * 300);
+        });
+        
+        // Print button functionality
+        const printBtn = document.querySelector('button[onclick*="print"]');
+        if (printBtn) {
+            printBtn.addEventListener('click', function() {
+                // Show print success message
+                const toast = new bootstrap.Toast(document.getElementById('toast') || 
+                    document.createElement('div'));
+                // You could add a toast message here
+            });
+        }
+    });
+</script>
 {% endblock %}

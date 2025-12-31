@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-{% load static %}
+{% load static i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -14,7 +15,142 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        /* Language Switcher Styles */
+    .language-flag {
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+    
+    .flag-icon {
+        font-size: 1.2rem;
+        display: inline-block;
+        border-radius: 2px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .flag-icon-us {
+        background: linear-gradient(to bottom, #b22234 33.3%, white 33.3%, white 66.6%, #b22234 66.6%);
+        position: relative;
+        width: 1.5em;
+        height: 1em;
+        display: inline-block;
+        vertical-align: middle;
+        border-radius: 2px;
+    }
+    
+    .flag-icon-us::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40%;
+        height: 53.8%;
+        background: #3c3b6e;
+    }
+    
+    .flag-icon-us::after {
+        content: '★';
+        position: absolute;
+        top: 10%;
+        left: 6%;
+        color: white;
+        font-size: 0.3em;
+        text-shadow: 
+            0.2em 0.2em 0 white,
+            0.4em 0 0 white,
+            0.2em -0.2em 0 white,
+            -0.2em 0.2em 0 white,
+            -0.2em -0.2em 0 white,
+            0 0.4em 0 white,
+            0 -0.4em 0 white,
+            0.4em 0.2em 0 white,
+            0.4em -0.2em 0 white,
+            -0.4em 0.2em 0 white,
+            -0.4em -0.2em 0 white,
+            0.2em 0.4em 0 white,
+            0.2em -0.4em 0 white,
+            -0.2em 0.4em 0 white,
+            -0.2em -0.4em 0 white;
+    }
+    
+    /* Dropdown item styles */
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0.125rem 0.5rem;
+        transition: all 0.2s ease;
+        border: none;
+        cursor: pointer;
+        background: transparent;
+        width: calc(100% - 1rem);
+        text-align: left;
+    }
+    
+    .dropdown-item:hover {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary, #6366f1);
+        transform: translateX(2px);
+    }
+    
+    .dropdown-item.active {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary, #6366f1);
+    }
+    
+    .flag-option {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .language-option-content {
+        flex: 1;
+    }
+    
+    .language-form {
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Ensure navbar dropdowns appear above other fixed elements */
+    .navbar .dropdown-menu {
+        position: absolute;
+        z-index: 2050; /* above navbar and modals backdrop */
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 991px) {
+        .language-name {
+            display: inline !important;
+            font-size: 0.875rem;
+        }
+        
+        .dropdown-menu {
+            position: fixed !important;
+            top: 60px !important;
+            right: 10px !important;
+            left: auto !important;
+            transform: none !important;
+        }
+    }
+    
+    /* Animation for language switch */
+    @keyframes languageChange {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .language-changed {
+        animation: languageChange 0.6s ease;
+    }
+    </style>
 </head>
+
 <body>
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
@@ -52,6 +188,70 @@
                 
                 <!-- Right Side Icons -->
                 <ul class="navbar-nav align-items-center">
+                    <!-- Language Switcher -->
+                    <!-- <li class="nav-item dropdown me-2">
+                        <!-- <a class="nav-link dropdown-toggle d-flex align-items-center" 
+                           href="#" role="button"
+                           id="languageDropdown"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false"
+                           style="text-decoration: none;">
+                            <span class="language-flag me-2" data-lang="{{ LANGUAGE_CODE }}">
+                                {% if LANGUAGE_CODE == 'en' %}
+                                <span class="flag-icon flag-icon-us"></span>
+                                {% elif LANGUAGE_CODE == 'km' %}
+                                <span class="flag-icon">🇰🇭</span>
+                                {% endif %}
+                            </span>
+                            <span class="language-name d-none d-lg-inline">
+                                {% if LANGUAGE_CODE == 'en' %}English{% elif LANGUAGE_CODE == 'km' %}ភាសាខ្មែរ{% endif %}
+                            </span>
+                        </a> 
+                        
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="languageDropdown" 
+                            style="min-width: 180px; border-radius: 12px; border: none; padding: 0.5rem;">
+                            <li>
+                                <form action="{% url 'set_language' %}" method="post" class="language-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    
+                                    <!-- English Option -->
+                                    <!-- <button type="submit" 
+                                            name="language" 
+                                            value="en"
+                                            class="dropdown-item d-flex align-items-center {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
+                                        <div class="flag-option me-3">
+                                            <span class="flag-icon flag-icon-us"></span>
+                                        </div>
+                                        <div class="language-option-content">
+                                            <div class="fw-semibold">English</div>
+                                            <div class="text-muted small">English</div>
+                                        </div>
+                                        {% if LANGUAGE_CODE == 'en' %}
+                                        <i class="bi bi-check text-primary ms-auto"></i>
+                                        {% endif %}
+                                    </button> -->
+                                    
+                                    <!-- Khmer Option -->
+                                    <!-- <button type="submit" 
+                                            name="language" 
+                                            value="km"
+                                            class="dropdown-item d-flex align-items-center {% if LANGUAGE_CODE == 'km' %}active{% endif %}">
+                                        <div class="flag-option me-3">
+                                            <span class="flag-icon">🇰🇭</span>
+                                        </div>
+                                        <div class="language-option-content">
+                                            <div class="fw-semibold">ភាសាខ្មែរ</div>
+                                            <div class="text-muted small">Khmer</div>
+                                        </div>
+                                        {% if LANGUAGE_CODE == 'km' %}
+                                        <i class="bi bi-check text-primary ms-auto"></i>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li> -->
                     <!-- Wishlist Icon -->
                     <li class="nav-item me-2">
                         <a class="nav-link position-relative nav-icon" href="{% url 'wishlist' %}" 
@@ -200,7 +400,6 @@
             </div>
         </div>
     </footer>
-
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -210,6 +409,103 @@
     <script>
         // Cart icon animation
         document.addEventListener('DOMContentLoaded', function() {
+            // Language switcher functionality
+            const languageDropdown = document.getElementById('languageDropdown');
+            const languageForms = document.querySelectorAll('.language-form');
+            
+            if (languageForms) {
+                languageForms.forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        const submitBtn = e.submitter || this.querySelector('button[type="submit"]');
+                        const selectedLang = submitBtn.value;
+                        
+                        // Show loading state
+                        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span>';
+                        submitBtn.disabled = true;
+                        
+                        // Animate the flag change
+                        const flagIcon = languageDropdown.querySelector('.language-flag');
+                        flagIcon.classList.add('language-changed');
+                        
+                        // Update flag preview
+                        setTimeout(() => {
+                            flagIcon.innerHTML = selectedLang === 'en' ? 
+                                '<span class="flag-icon flag-icon-us"></span>' : 
+                                '<span class="flag-icon">🇰🇭</span>';
+                            
+                            // Update language name
+                            const languageName = languageDropdown.querySelector('.language-name');
+                            if (languageName) {
+                                languageName.textContent = selectedLang === 'en' ? 'English' : 'ភាសាខ្មែរ';
+                            }
+                            
+                            flagIcon.classList.remove('language-changed');
+                        }, 300);
+                        
+                        // Revert button state after 2 seconds (in case of error)
+                        setTimeout(() => {
+                            if (submitBtn) {
+                                submitBtn.innerHTML = selectedLang === 'en' ? 
+                                    '<div class="flag-option me-3"><span class="flag-icon flag-icon-us"></span></div><div class="language-option-content"><div class="fw-semibold">English</div><div class="text-muted small">English</div></div><i class="bi bi-check text-primary ms-auto"></i>' :
+                                    '<div class="flag-option me-3"><span class="flag-icon">🇰🇭</span></div><div class="language-option-content"><div class="fw-semibold">ភាសាខ្មែរ</div><div class="text-muted small">Khmer</div></div><i class="bi bi-check text-primary ms-auto"></i>';
+                                submitBtn.disabled = false;
+                            }
+                        }, 2000);
+                    });
+                });
+            }
+            
+            // Close dropdown after selection (on mobile)
+            if (languageDropdown) {
+                const dropdownInstance = bootstrap.Dropdown.getInstance(languageDropdown) || 
+                                        new bootstrap.Dropdown(languageDropdown);
+                
+                document.querySelectorAll('.language-form button[type="submit"]').forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Close dropdown on mobile
+                        if (window.innerWidth < 992) {
+                            dropdownInstance.hide();
+                        }
+                    });
+                });
+            }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.querySelector('.language-form')) {
+                    const dropdown = bootstrap.Dropdown.getInstance(languageDropdown);
+                    if (dropdown) dropdown.hide();
+                }
+            });
+            
+            // Add tooltip on hover
+            if (languageDropdown) {
+                languageDropdown.setAttribute('title', 'Change language');
+                languageDropdown.setAttribute('data-bs-toggle', 'tooltip');
+            }
+            
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Ensure language dropdown toggles even if other handlers interfere
+            try {
+                const langToggle = document.getElementById('languageDropdown');
+                if (langToggle) {
+                    const existing = bootstrap.Dropdown.getInstance(langToggle);
+                    const dd = existing || new bootstrap.Dropdown(langToggle);
+                    // Ensure click toggles dropdown and doesn't navigate
+                    langToggle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        dd.toggle();
+                    });
+                }
+            } catch (e) {
+                console.warn('Language dropdown init error', e);
+            }
+
             // Add animation to cart icon when adding items
             const cartIcon = document.querySelector('a[href*="cart"]');
             if (cartIcon) {

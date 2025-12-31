@@ -1,0 +1,26 @@
+# Khmer translations for MiniShop
+# Created manually as examples — run `django-admin makemessages` to extract
+msgid ""
+msgstr ""
+"Project-Id-Version: MiniShop\n"
+"POT-Creation-Date: 2025-12-31 00:00+0000\n"
+"PO-Revision-Date: 2025-12-31 00:00+0000\n"
+"Last-Translator: You <you@example.com>\n"
+"Language-Team: Khmer <you@example.com>\n"
+"Language: km\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+# Example translations
+msgid "English"
+msgstr "អង់គ្លេស"
+
+msgid "Khmer"
+msgstr "ភាសាខ្មែរ"
+
+msgid "Your cart is empty"
+msgstr "កន្ត្រករបស់អ្នកទទេ"
+
+msgid "Add to Cart"
+msgstr "បញ្ចូលទៅកន្ត្រក"

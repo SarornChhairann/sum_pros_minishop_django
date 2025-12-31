@@ -105,12 +105,15 @@
                     <!-- Actions -->
                     <div class="mt-auto">
                         {% if item.product.is_available %}
-                        <form method="post" action="{% url 'add_to_cart' item.product.id %}" class="mb-2">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-cart-plus me-1"></i>Add to Cart
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-primary w-100 add-to-cart-btn mb-2" 
+                                data-product-id="{{ item.product.id }}"
+                                data-url="{% url 'add_to_cart' item.product.id %}">
+                            <i class="bi bi-cart-plus me-1"></i>Add to Cart
+                        </button>
+                        {% else %}
+                        <button class="btn btn-secondary w-100 mb-2" disabled>
+                            <i class="bi bi-cart-x me-1"></i>Out of Stock
+                        </button>
                         {% endif %}
                         
                         <div class="d-flex gap-2">
@@ -174,6 +177,19 @@
     {% endif %}
 </div>
 
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toast-title">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toast-message">
+            <!-- Message will be inserted here -->
+        </div>
+    </div>
+</div>
+
 <style>
     .wishlist-item {
         transition: all 0.3s ease;
@@ -212,6 +228,34 @@
     .breadcrumb-item.active {
         color: var(--primary);
     }
+    
+    .add-to-cart-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+    
+    .add-to-cart-btn.loading {
+        position: relative;
+        color: transparent;
+    }
+    
+    .add-to-cart-btn.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 20px;
+        height: 20px;
+        margin: -10px 0 0 -10px;
+        border: 2px solid #ffffff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 </style>
 
 <script>
@@ -224,7 +268,23 @@
         
         let isAllSelected = false;
 
-        // Safely update selected count (guard optional elements)
+        // Initialize Toast
+        const toastEl = document.getElementById('toast');
+        const toastTitle = document.getElementById('toast-title');
+        const toastMessage = document.getElementById('toast-message');
+        const toast = toastEl ? new bootstrap.Toast(toastEl, { delay: 3000 }) : null;
+
+        // Confirm dialog function
+        function showConfirm({ title, message, confirmText, cancelText }) {
+            return new Promise((resolve) => {
+                // Using browser's native confirm for simplicity
+                // In a real app, you might want to use a custom modal
+                const confirmed = confirm(`${title}\n\n${message}`);
+                resolve(confirmed);
+            });
+        }
+
+        // Update selected count
         function updateSelectedCount() {
             const selected = document.querySelectorAll('.product-check:checked');
             const count = selected.length;
@@ -250,7 +310,7 @@
             }
         }
 
-        // Select/Deselect all (only if selectAllBtn exists)
+        // Select/Deselect all
         if (selectAllBtn) {
             selectAllBtn.addEventListener('click', function() {
                 isAllSelected = !isAllSelected;
@@ -273,7 +333,103 @@
             });
         }
 
-        // Remove selected items (only if button exists)
+        // CSRF helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        const csrftoken = getCookie('csrftoken');
+
+        // Add to Cart functionality
+        document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const url = this.dataset.url;
+                const button = this;
+                
+                // Disable button and show loading state
+                button.disabled = true;
+                button.classList.add('loading');
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrftoken,
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(async response => {
+                    let data = {};
+                    try { 
+                        data = await response.json(); 
+                    } catch (e) {
+                        console.error('Failed to parse JSON response:', e);
+                    }
+
+                    // Re-enable button
+                    button.disabled = false;
+                    button.classList.remove('loading');
+
+                    // Handle authentication redirect
+                    if (response.status === 401 || data.login_required) {
+                        const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
+                        window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                        return;
+                    }
+
+                    if (response.ok && data.success) {
+                        // Success message
+                        showToast(data.message || 'Item added to cart successfully!', 'success');
+                        
+                        // Update cart count in navbar if element exists
+                        const cartBadge = document.querySelector('.badge-count.cart-count');
+                        if (cartBadge) {
+                            const newCount = data.cart_count || (parseInt(cartBadge.textContent) + 1);
+                            cartBadge.textContent = newCount;
+                        }
+                        
+                        // Update button text temporarily
+                        const originalText = button.innerHTML;
+                        button.innerHTML = '<i class="bi bi-check-circle me-1"></i>Added!';
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-success');
+                        
+                        // Revert button after 2 seconds
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                            button.classList.remove('btn-success');
+                            button.classList.add('btn-primary');
+                        }, 2000);
+                        
+                    } else {
+                        // Error message
+                        showToast(data.error || 'Failed to add item to cart. Please try again.', 'danger');
+                    }
+                }).catch(error => {
+                    // Re-enable button
+                    button.disabled = false;
+                    button.classList.remove('loading');
+                    
+                    // Network error
+                    showToast('Network error. Please check your connection and try again.', 'danger');
+                    console.error('Add to cart error:', error);
+                });
+            });
+        });
+
+        // Remove selected items
         if (removeSelectedBtn) {
             removeSelectedBtn.addEventListener('click', function() {
                 const selected = document.querySelectorAll('.product-check:checked');
@@ -281,7 +437,6 @@
 
                 if (productIds.length === 0) return;
 
-                // Confirm with custom modal, then remove
                 showConfirm({
                     title: 'Remove items',
                     message: `Remove ${productIds.length} item(s) from wishlist?`,
@@ -290,20 +445,20 @@
                 }).then(confirmed => {
                     if (!confirmed) return;
 
-                    // For each selected product, call the remove endpoint WITHOUT prompting again
+                    // For each selected product, call the remove endpoint
                     productIds.forEach(id => {
                         const item = document.querySelector(`.wishlist-item[data-id="${id}"]`);
                         const url = `/wishlist/remove/${id}/`;
                         ajaxRemoveConfirmed(id, url, item);
                     });
 
-                    // After initiating removals, clear selection UI (actual counts update when removals complete)
+                    // Clear selection
                     checkboxes.forEach(cb => cb.checked = false);
                 });
             });
         }
 
-        // Move to cart (only if button exists)
+        // Move multiple items to cart
         if (moveToCartBtn) {
             moveToCartBtn.addEventListener('click', function() {
                 const selected = document.querySelectorAll('.product-check:checked');
@@ -311,113 +466,164 @@
 
                 if (productIds.length === 0) return;
 
-                // In a real application, you would make an AJAX request here
-                showToast(`${productIds.length} items added to cart`, 'success');
+                // Disable button and show loading
+                const originalText = moveToCartBtn.innerHTML;
+                moveToCartBtn.disabled = true;
+                moveToCartBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Adding...';
 
-                // Uncheck all checkboxes
-                checkboxes.forEach(checkbox => checkbox.checked = false);
-                updateSelectedCount();
-                if (selectAllBtn) selectAllBtn.innerHTML = `<i class="bi bi-check-square me-1"></i>Select All`;
-                isAllSelected = false;
+                let successCount = 0;
+                let errorCount = 0;
+                let completed = 0;
+
+                // Add each product to cart
+                productIds.forEach((id, index) => {
+                    const url = `/cart/add/${id}/`;
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': csrftoken,
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin'
+                    }).then(async response => {
+                        let data = {};
+                        try { data = await response.json(); } catch (e) {}
+
+                        completed++;
+                        
+                        if (response.ok && data.success) {
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+
+                        // If all requests are complete, show result
+                        if (completed === productIds.length) {
+                            // Re-enable button
+                            moveToCartBtn.disabled = false;
+                            moveToCartBtn.innerHTML = originalText;
+                            
+                            // Update cart badge
+                            const cartBadge = document.querySelector('.badge-count.cart-count');
+                            if (cartBadge && successCount > 0) {
+                                const newCount = parseInt(cartBadge.textContent) + successCount;
+                                cartBadge.textContent = newCount;
+                            }
+                            
+                            // Show result message
+                            let message = '';
+                            if (successCount > 0 && errorCount === 0) {
+                                message = `${successCount} item(s) added to cart successfully!`;
+                                showToast(message, 'success');
+                            } else if (successCount > 0 && errorCount > 0) {
+                                message = `${successCount} item(s) added, ${errorCount} failed`;
+                                showToast(message, 'warning');
+                            } else {
+                                message = 'Failed to add items to cart';
+                                showToast(message, 'danger');
+                            }
+                            
+                            // Clear selection
+                            checkboxes.forEach(cb => cb.checked = false);
+                            updateSelectedCount();
+                            if (selectAllBtn) {
+                                selectAllBtn.innerHTML = `<i class="bi bi-check-square me-1"></i>Select All`;
+                                isAllSelected = false;
+                            }
+                        }
+                    }).catch(error => {
+                        completed++;
+                        errorCount++;
+                        
+                        if (completed === productIds.length) {
+                            moveToCartBtn.disabled = false;
+                            moveToCartBtn.innerHTML = originalText;
+                            showToast('Network error occurred', 'danger');
+                        }
+                    });
+                });
             });
         }
-    });
-    // CSRF helper
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
+
+        // AJAX remove function (for single items)
+        function ajaxRemoveConfirmed(productId, url, el) {
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            }).then(async response => {
+                let data = {};
+                try { data = await response.json(); } catch (e) {}
+
+                if (response.status === 401 || data.login_required) {
+                    const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
+                    window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    return;
                 }
-            }
+
+                if (response.ok && data.success) {
+                    // Remove element from DOM with animation
+                    if (el) {
+                        el.style.transform = 'scale(0.98)';
+                        el.style.opacity = '0';
+                        setTimeout(() => el.remove(), 300);
+                    }
+
+                    showToast('Item removed from wishlist', 'success');
+
+                    // Update wishlist badge
+                    const badge = document.querySelector('.badge-count.wishlist-count');
+                    if (badge) {
+                        const newCount = (typeof data.wishlist_count !== 'undefined') ? data.wishlist_count : Math.max(0, parseInt(badge.textContent || 0) - 1);
+                        if (newCount > 0) badge.textContent = newCount; else badge.remove();
+                    }
+
+                    // Update wishlist count in header
+                    const wishlistCountEl = document.querySelector('p.text-muted .text-muted');
+                    if (wishlistCountEl && data.wishlist_count !== undefined) {
+                        const countText = wishlistCountEl.parentElement;
+                        countText.innerHTML = `<i class="bi bi-heart-fill text-danger me-1"></i>${data.wishlist_count} items saved`;
+                    }
+
+                    updateSelectedCount();
+
+                } else {
+                    showToast(data.error || 'Could not remove item', 'danger');
+                }
+            }).catch(err => {
+                showToast('Network error', 'danger');
+            });
         }
-        return cookieValue;
-    }
 
-    const csrftoken = getCookie('csrftoken');
+        // Remove single item
+        function ajaxRemove(productId, url, el) {
+            showConfirm({ 
+                title: 'Remove item', 
+                message: 'Remove this item from wishlist?', 
+                confirmText: 'Remove', 
+                cancelText: 'Cancel' 
+            }).then(confirmed => {
+                if (!confirmed) return;
+                ajaxRemoveConfirmed(productId, url, el);
+            });
+        }
 
-    // Attach AJAX remove handlers to remove buttons
-    function ajaxRemoveConfirmed(productId, url, el) {
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrftoken,
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin'
-        }).then(async response => {
-            let data = {};
-            try { data = await response.json(); } catch (e) {}
-
-            if (response.status === 401 || data.login_required) {
-                const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
-                window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
-                return;
-            }
-
-            if (response.ok && data.success) {
-                // remove element from DOM with animation
-                if (el) {
-                    el.style.transform = 'scale(0.98)';
-                    el.style.opacity = '0';
-                    setTimeout(() => el.remove(), 300);
-                }
-
-                showToast('Item removed from wishlist', 'success');
-
-                // Update navbar badge
-                const badge = document.querySelector('.badge-count.wishlist-count');
-                if (badge) {
-                    const newCount = (typeof data.wishlist_count !== 'undefined') ? data.wishlist_count : Math.max(0, parseInt(badge.textContent || 0) - 1);
-                    if (newCount > 0) badge.textContent = newCount; else badge.remove();
-                }
-
-                // Recompute selected counts and button states on page
-                const selectedCountEl = document.getElementById('selectedCount');
-                const removeSelectedBtn = document.getElementById('removeSelectedBtn');
-                const moveToCartBtn = document.getElementById('moveToCartBtn');
-                const selected = document.querySelectorAll('.product-check:checked');
-                const count = selected.length;
-                if (selectedCountEl) selectedCountEl.textContent = count;
-                if (removeSelectedBtn) {
-                    removeSelectedBtn.disabled = count === 0;
-                    removeSelectedBtn.innerHTML = count > 0 ? `<i class="bi bi-trash me-1"></i>Remove (${count})` : `<i class="bi bi-trash me-1"></i>Remove Selected`;
-                }
-                if (moveToCartBtn) {
-                    moveToCartBtn.disabled = count === 0;
-                    moveToCartBtn.innerHTML = count > 0 ? `<i class="bi bi-cart-check me-1"></i>Move ${count} to Cart` : `<i class="bi bi-cart-check me-1"></i>Move to Cart`;
-                }
-
-            } else {
-                showToast(data.error || 'Could not remove item', 'danger');
-            }
-        }).catch(err => {
-            showToast('Network error', 'danger');
-        });
-    }
-
-    function ajaxRemove(productId, url, el) {
-        showConfirm({ title: 'Remove item', message: 'Remove this item from wishlist?', confirmText: 'Remove', cancelText: 'Cancel' }).then(confirmed => {
-            if (!confirmed) return;
-            ajaxRemoveConfirmed(productId, url, el);
-        });
-    }
-
-    // Wire up inline and card buttons
-    document.querySelectorAll('.remove-btn, .remove-btn-inline').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const productId = this.dataset.productId || this.getAttribute('data-product-id');
-            const url = this.dataset.url || this.getAttribute('data-url') || `/wishlist/remove/${productId}/`;
-            const card = this.closest('.wishlist-item');
-            ajaxRemove(productId, url, card);
+        // Wire up remove buttons
+        document.querySelectorAll('.remove-btn, .remove-btn-inline').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const productId = this.dataset.productId || this.getAttribute('data-product-id');
+                const url = this.dataset.url || this.getAttribute('data-url') || `/wishlist/remove/${productId}/`;
+                const card = this.closest('.wishlist-item');
+                ajaxRemove(productId, url, card);
+            });
         });
     });
-    
 </script>
 {% endblock %}
