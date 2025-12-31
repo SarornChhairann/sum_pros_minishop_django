@@ -1,0 +1,762 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - MiniShop{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="row w-100 justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+            <!-- Signup Card -->
+            <div class="card signup-card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+                <div class="row g-0">
+                    <!-- Left Side - Illustration -->
+                    <div class="col-lg-5 d-none d-lg-flex bg-gradient-primary p-5">
+                        <div class="w-100 d-flex flex-column justify-content-center align-items-center">
+                            <!-- Brand Logo -->
+                            <div class="text-center mb-5">
+                                <div class="brand-logo mb-4">
+                                    <i class="bi bi-shop" style="font-size: 3rem; color: white;"></i>
+                                </div>
+                                <h2 class="text-white mb-2">Join MiniShop</h2>
+                                <p class="text-white opacity-75">Create your free account</p>
+                            </div>
+                            
+                            <!-- Illustration -->
+                            <div class="illustration-container mb-5">
+                                <i class="bi bi-person-plus" style="font-size: 8rem; color: rgba(255,255,255,0.9);"></i>
+                            </div>
+                            
+                            <!-- Benefits -->
+                            <div class="benefits-list w-100">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="benefit-icon me-3">
+                                        <i class="bi bi-lightning-fill text-white"></i>
+                                    </div>
+                                    <span class="text-white">Fast checkout</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="benefit-icon me-3">
+                                        <i class="bi bi-truck text-white"></i>
+                                    </div>
+                                    <span class="text-white">Free shipping on first order</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="benefit-icon me-3">
+                                        <i class="bi bi-gift-fill text-white"></i>
+                                    </div>
+                                    <span class="text-white">Exclusive member discounts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side - Signup Form -->
+                    <div class="col-lg-7">
+                        <div class="card-body p-4 p-md-5">
+                            <!-- Mobile Header -->
+                            <div class="text-center mb-4 d-lg-none">
+                                <div class="brand-logo mb-3">
+                                    <i class="bi bi-shop text-primary" style="font-size: 2.5rem;"></i>
+                                </div>
+                                <h3 class="mb-2">Create Account</h3>
+                                <p class="text-muted">Join thousands of happy customers</p>
+                            </div>
+                            
+                            <!-- Progress Steps -->
+                            <div class="progress-steps mb-5 d-none">
+                                <div class="steps">
+                                    <div class="step active">1</div>
+                                    <div class="step">2</div>
+                                    <div class="step">3</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Form -->
+                            <form method="post" action="{% url 'register' %}" class="signup-form" id="signupForm" novalidate>
+                                {% csrf_token %}
+                                
+                                <!-- Messages & Errors -->
+                                {% if form.errors %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Please correct the errors below.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endif %}
+                                
+                                {% if messages %}
+                                {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Personal Information Section -->
+                                <div class="section-header mb-4">
+                                    <h5 class="mb-1">
+                                        <i class="bi bi-person-circle me-2 text-primary"></i>
+                                        Personal Information
+                                    </h5>
+                                    <p class="text-muted small mb-0">Tell us a little about yourself</p>
+                                </div>
+                                
+                                <!-- Username Field -->
+                                <div class="mb-4">
+                                    <label for="id_username" class="form-label fw-semibold">Username *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-person text-muted"></i>
+                                        </span>
+                                        <input type="text"
+                                               name="username"
+                                               id="id_username"
+                                               class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                                               placeholder="Choose a username"
+                                               value="{{ form.username.value|default:'' }}"
+                                               required>
+                                    </div>
+                                    {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.username.errors.0 }}</div>
+                                    {% else %}
+                                    <div class="form-text">This will be your public display name</div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Email Field -->
+                                <div class="mb-4">
+                                    <label for="id_email" class="form-label fw-semibold">Email Address *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-envelope text-muted"></i>
+                                        </span>
+                                        <input type="email"
+                                               name="email"
+                                               id="id_email"
+                                               class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                               placeholder="your@email.com"
+                                               value="{{ form.email.value|default:'' }}"
+                                               required>
+                                    </div>
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Password Section -->
+                                <div class="section-header mb-4 mt-5">
+                                    <h5 class="mb-1">
+                                        <i class="bi bi-shield-lock me-2 text-primary"></i>
+                                        Security
+                                    </h5>
+                                    <p class="text-muted small mb-0">Create a secure password</p>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="id_password1" class="form-label fw-semibold">Password *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-key text-muted"></i>
+                                        </span>
+                                        <input type="password"
+                                               name="password1"
+                                               id="id_password1"
+                                               class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                                               placeholder="Create a password"
+                                               required>
+                                        <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword1">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="password-strength mt-2">
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar" id="passwordStrength" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted" id="passwordHint"></small>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="id_password2" class="form-label fw-semibold">Confirm Password *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-key-fill text-muted"></i>
+                                        </span>
+                                        <input type="password"
+                                               name="password2"
+                                               id="id_password2"
+                                               class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                                               placeholder="Confirm your password"
+                                               required>
+                                        <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword2">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="showPasswordMatch">
+                                        <label class="form-check-label small" for="showPasswordMatch">Show password match status</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Password Requirements -->
+                                <div class="card border-0 bg-light mb-4">
+                                    <div class="card-body p-3">
+                                        <h6 class="mb-2 small fw-semibold">Password Requirements:</h6>
+                                        <ul class="list-unstyled mb-0 small">
+                                            <li class="mb-1 requirement" data-rule="length">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                                At least 8 characters
+                                            </li>
+                                            <li class="mb-1 requirement" data-rule="uppercase">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                                One uppercase letter
+                                            </li>
+                                            <li class="mb-1 requirement" data-rule="lowercase">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                                One lowercase letter
+                                            </li>
+                                            <li class="mb-1 requirement" data-rule="number">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                                One number
+                                            </li>
+                                            <li class="mb-0 requirement" data-rule="special">
+                                                <i class="bi bi-x-circle text-danger me-2"></i>
+                                                One special character
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <!-- Terms & Conditions -->
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input {% if form.terms.errors %}is-invalid{% endif %}" 
+                                               type="checkbox" 
+                                               name="terms" 
+                                               id="id_terms"
+                                               required>
+                                        <label class="form-check-label small" for="id_terms">
+                                            I agree to the 
+                                            <a href="#" class="text-decoration-none">Terms of Service</a> 
+                                            and 
+                                            <a href="#" class="text-decoration-none">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                    {% if form.terms.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.terms.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Newsletter Subscription -->
+                                <div class="mb-5">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="newsletter" checked>
+                                        <label class="form-check-label small" for="newsletter">
+                                            Subscribe to our newsletter for updates and exclusive offers
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid mb-4">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="signupBtn">
+                                        <span class="btn-text">Create Account</span>
+                                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Login Link -->
+                                <div class="text-center">
+                                    <p class="mb-0">
+                                        Already have an account?
+                                        <a href="{% url 'login' %}" class="text-decoration-none fw-semibold text-primary">
+                                            Sign in here
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Back to Home -->
+            <div class="text-center mt-4">
+                <a href="{% url 'home' %}" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-2"></i>Back to homepage
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --secondary: #8b5cf6;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --dark: #1e293b;
+        --light: #f8fafc;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+    }
+    
+    .signup-card {
+        animation: slideUp 0.6s ease-out;
+        overflow: hidden;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-control {
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .form-control.is-invalid {
+        border-color: var(--danger);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(.375em + .1875rem) center;
+        background-size: calc(.75em + .375rem) calc(.75em + .375rem);
+    }
+    
+    .input-group-text {
+        border-radius: 12px 0 0 12px !important;
+        border: 2px solid #e2e8f0;
+        border-right: none;
+        background: var(--light);
+    }
+    
+    #togglePassword1, #togglePassword2 {
+        border-radius: 0 12px 12px 0 !important;
+        border: 2px solid #e2e8f0;
+        border-left: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .section-header {
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .progress-steps {
+        padding: 1rem;
+    }
+    
+    .steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .steps::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e2e8f0;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+    
+    .step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #94a3b8;
+        position: relative;
+        z-index: 2;
+        transition: all 0.3s ease;
+    }
+    
+    .step.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+        transform: scale(1.1);
+    }
+    
+    .password-strength .progress {
+        background-color: #e2e8f0;
+    }
+    
+    .password-strength .progress-bar {
+        background-color: var(--danger);
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    
+    .benefit-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .benefits-list {
+        max-width: 280px;
+    }
+    
+    .illustration-container {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .requirement.met i {
+        color: var(--success) !important;
+    }
+    
+    .requirement.met i::before {
+        content: "\F26E" !important; /* bi-check-circle-fill */
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .form-switch .form-check-input:focus {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%236366f1'/%3e%3c/svg%3e");
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .signup-card {
+            margin: 1rem;
+        }
+        
+        .card-body {
+            padding: 2rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .row {
+            margin-left: -0.5rem;
+            margin-right: -0.5rem;
+        }
+        
+        .col-md-6 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password visibility toggle
+    const togglePassword1 = document.getElementById('togglePassword1');
+    const togglePassword2 = document.getElementById('togglePassword2');
+    const password1 = document.getElementById('id_password1');
+    const password2 = document.getElementById('id_password2');
+    
+    function togglePasswordVisibility(button, input) {
+        button.addEventListener('click', function() {
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        });
+    }
+    
+    if (togglePassword1 && password1) togglePasswordVisibility(togglePassword1, password1);
+    if (togglePassword2 && password2) togglePasswordVisibility(togglePassword2, password2);
+    
+    // Password strength checker
+    if (password1) {
+        password1.addEventListener('input', function() {
+            const password = this.value;
+            const strengthBar = document.getElementById('passwordStrength');
+            const hint = document.getElementById('passwordHint');
+            const requirements = document.querySelectorAll('.requirement');
+            
+            // Reset requirements
+            requirements.forEach(req => {
+                req.classList.remove('met');
+            });
+            
+            // Calculate strength
+            let strength = 0;
+            let hintText = '';
+            
+            // Length check
+            if (password.length >= 8) {
+                strength += 20;
+                document.querySelector('.requirement[data-rule="length"]').classList.add('met');
+            }
+            
+            // Uppercase check
+            if (/[A-Z]/.test(password)) {
+                strength += 20;
+                document.querySelector('.requirement[data-rule="uppercase"]').classList.add('met');
+            }
+            
+            // Lowercase check
+            if (/[a-z]/.test(password)) {
+                strength += 20;
+                document.querySelector('.requirement[data-rule="lowercase"]').classList.add('met');
+            }
+            
+            // Number check
+            if (/\d/.test(password)) {
+                strength += 20;
+                document.querySelector('.requirement[data-rule="number"]').classList.add('met');
+            }
+            
+            // Special character check
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+                strength += 20;
+                document.querySelector('.requirement[data-rule="special"]').classList.add('met');
+            }
+            
+            // Update progress bar
+            strengthBar.style.width = strength + '%';
+            
+            // Set color based on strength
+            if (strength <= 40) {
+                strengthBar.style.backgroundColor = 'var(--danger)';
+                hintText = 'Weak password';
+            } else if (strength <= 80) {
+                strengthBar.style.backgroundColor = 'var(--warning)';
+                hintText = 'Moderate password';
+            } else {
+                strengthBar.style.backgroundColor = 'var(--success)';
+                hintText = 'Strong password!';
+            }
+            
+            if (hint) hint.textContent = hintText;
+        });
+    }
+    
+    // Password match checker
+    const showPasswordMatch = document.getElementById('showPasswordMatch');
+    if (showPasswordMatch && password1 && password2) {
+        showPasswordMatch.addEventListener('change', function() {
+            if (this.checked) {
+                password2.addEventListener('input', checkPasswordMatch);
+                checkPasswordMatch();
+            } else {
+                password2.removeEventListener('input', checkPasswordMatch);
+                password2.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+        
+        function checkPasswordMatch() {
+            if (password2.value === '') {
+                password2.classList.remove('is-valid', 'is-invalid');
+            } else if (password1.value === password2.value) {
+                password2.classList.remove('is-invalid');
+                password2.classList.add('is-valid');
+            } else {
+                password2.classList.remove('is-valid');
+                password2.classList.add('is-invalid');
+            }
+        }
+    }
+    
+    // Form submission
+    const signupForm = document.getElementById('signupForm');
+    const signupBtn = document.getElementById('signupBtn');
+    
+    if (signupForm && signupBtn) {
+        signupForm.addEventListener('submit', function(e) {
+            // Validate terms agreement
+            const termsCheckbox = document.getElementById('id_terms');
+            if (termsCheckbox && !termsCheckbox.checked) {
+                e.preventDefault();
+                termsCheckbox.classList.add('is-invalid');
+                termsCheckbox.focus();
+                
+                // Add error message
+                let errorMsg = termsCheckbox.nextElementSibling;
+                if (!errorMsg.classList.contains('invalid-feedback')) {
+                    const newError = document.createElement('div');
+                    newError.className = 'invalid-feedback d-block mt-1';
+                    newError.textContent = 'You must agree to the terms and conditions';
+                    termsCheckbox.parentNode.appendChild(newError);
+                }
+                return;
+            }
+            
+            // Show loading state
+            const btnText = signupBtn.querySelector('.btn-text');
+            const spinner = signupBtn.querySelector('.spinner-border');
+            
+            if (btnText && spinner) {
+                btnText.textContent = 'Creating Account...';
+                btnText.classList.add('d-none');
+                spinner.classList.remove('d-none');
+                signupBtn.disabled = true;
+            }
+            
+            // Form validation
+            const username = document.getElementById('id_username');
+            const email = document.getElementById('id_email');
+            const password1 = document.getElementById('id_password1');
+            const password2 = document.getElementById('id_password2');
+            let isValid = true;
+            
+            // Simple client-side validation
+            [username, email, password1, password2].forEach(input => {
+                if (input && input.value.trim() === '') {
+                    input.classList.add('is-invalid');
+                    isValid = false;
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Restore button state
+                if (btnText && spinner) {
+                    btnText.classList.remove('d-none');
+                    spinner.classList.add('d-none');
+                    btnText.textContent = 'Create Account';
+                    signupBtn.disabled = false;
+                }
+                return;
+            }
+            
+            // If all valid, allow form submission
+            setTimeout(() => {
+                if (btnText && spinner) {
+                    btnText.classList.remove('d-none');
+                    spinner.classList.add('d-none');
+                    btnText.textContent = 'Create Account';
+                    signupBtn.disabled = false;
+                }
+            }, 2000);
+        });
+    }
+    
+    // Real-time username validation (optional)
+    const usernameInput = document.getElementById('id_username');
+    if (usernameInput) {
+        let usernameTimeout;
+        usernameInput.addEventListener('input', function() {
+            clearTimeout(usernameTimeout);
+            usernameTimeout = setTimeout(() => {
+                const username = this.value.trim();
+                if (username.length > 0) {
+                    // Here you could make an AJAX call to check username availability
+                    console.log('Checking username:', username);
+                }
+            }, 500);
+        });
+    }
+    
+    // Add ripple effect to signup button
+    signupBtn.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const ripple = document.createElement('span');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+    
+    // Auto-focus on username field
+    if (usernameInput) {
+        setTimeout(() => {
+            usernameInput.focus();
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

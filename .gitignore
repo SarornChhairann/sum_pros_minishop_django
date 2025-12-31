@@ -1,0 +1,71 @@
+# Python
+*.py[cod]
+__pycache__/
+*.so
+
+# Virtual environments
+venv/
+ENV/
+.env/
+.env
+.venv/
+env/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+/media/
+media/
+/staticfiles/
+/static/
+
+# Environment files
+.env
+.env.local
+.env.*
+.python-version
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Node
+node_modules/
+
+# Misc
+*.swp
+*~
+
+# Ignore system files
+Thumbs.db
+ehthumbs.db
+
+# secrets
+credentials/
+secrets/

@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  .form-card {
+    max-width: 980px;
+    margin: 1.5rem auto;
+    border-radius: .75rem;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(18, 25, 40, .08);
+    transform-origin: center top;
+    animation: fadeInUp .35s ease;
+  }
+  .form-left {
+    background: linear-gradient(180deg, #ffffffee, #f8fafc);
+    padding: 1.5rem;
+  }
+  .form-right {
+    background: linear-gradient(180deg, rgba(99,102,241,.06), rgba(96,165,250,.03));
+    padding: 1.5rem;
+    border-left: 1px solid rgba(0,0,0,.03);
+  }
+  .field-group { margin-bottom: .9rem; }
+  .drag-area {
+    border: 2px dashed rgba(99,102,241,.25);
+    border-radius: .5rem;
+    padding: 1rem;
+    text-align: center;
+    transition: background .18s, border-color .18s, transform .12s;
+    background: rgba(99,102,241, .02);
+  }
+  .drag-area.dragover {
+    background: rgba(99,102,241,.08);
+    border-color: rgba(99,102,241,.7);
+    transform: translateY(-3px);
+  }
+  .img-preview {
+    width: 100%;
+    max-height: 260px;
+    object-fit: cover;
+    border-radius: .5rem;
+    display:block;
+    margin-bottom:.6rem;
+    box-shadow: 0 6px 20px rgba(2,6,23,.06);
+  }
+  .meta-small { font-size: .88rem; color: #6b7280; }
+  .btn-save {
+    transition: transform .12s ease, box-shadow .12s;
+  }
+  .btn-save:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(99,102,241,.12); }
+  @keyframes fadeInUp { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+  @media (max-width: 767px) {
+    .form-right { border-left: none; border-top: 1px solid rgba(0,0,0,.03) }
+  }
+</style>
+
+<div class="form-card bg-white rounded d-flex flex-column flex-md-row">
+  <div class="form-left col-12 col-md-6">
+    <h3 class="mb-3">{% if form.instance.pk %}Edit{% else %}Add{% endif %} Product</h3>
+
+    <form method="post" enctype="multipart/form-data" id="product-form" novalidate>
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="field-group">
+        <label class="form-label">Name</label>
+        {{ form.name }}
+        <div class="text-danger small">{{ form.name.errors }}</div>
+      </div>
+
+      <div class="field-group">
+        <label class="form-label">Description</label>
+        {{ form.description }}
+        <div class="text-danger small">{{ form.description.errors }}</div>
+      </div>
+
+      <div class="row">
+        <div class="col-6 field-group">
+          <label class="form-label">Price</label>
+          {{ form.price }}
+          <div class="text-danger small">{{ form.price.errors }}</div>
+        </div>
+        <div class="col-6 field-group">
+          <label class="form-label">Stock</label>
+          {{ form.stock }}
+          <div class="text-danger small">{{ form.stock.errors }}</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="form-label">Status</label>
+        {{ form.status }}
+        <div class="text-danger small">{{ form.status.errors }}</div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary btn-save" type="submit">
+          <i class="bi bi-save2 me-2"></i> Save
+        </button>
+        <a class="btn btn-outline-secondary" href="{% url 'admin_product_list' %}">
+          <i class="bi bi-arrow-left me-1"></i> Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <div class="form-right col-12 col-md-6">
+    <h5 class="mb-2">Product Image</h5>
+
+    <div id="imageContainer" class="mb-3">
+      {% if form.instance and form.instance.image %}
+        <img id="previewImage" src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="img-preview">
+      {% elif form.instance and form.instance.image_url %}
+        <img id="previewImage" src="{{ form.instance.image_url }}" alt="{{ form.instance.name }}" class="img-preview">
+      {% else %}
+        <img id="previewImage" src="https://via.placeholder.com/600x400?text=No+Image" alt="No image" class="img-preview">
+      {% endif %}
+      <div class="meta-small">Preview updates when you pick or drag an image file.</div>
+    </div>
+
+    <div id="dragArea" class="drag-area mb-3" tabindex="0" role="button" aria-label="Drag image here or click to select">
+      <div class="mb-2"><i class="bi bi-cloud-arrow-up" style="font-size:1.8rem;color:#6366F1;"></i></div>
+      <div class="fw-semibold">Drag & drop an image here</div>
+      <div class="meta-small">or click to choose a file (jpg, png). Max recommended size: 3MB.</div>
+    </div>
+
+    <div class="field-group">
+      <label class="form-label">Upload Image</label>
+      {{ form.image }}
+      <div class="text-danger small">{{ form.image.errors }}</div>
+    </div>
+
+    <div class="field-group">
+      <label class="form-label">Image URL (optional)</label>
+      {{ form.image_url }}
+      <div class="text-danger small">{{ form.image_url.errors }}</div>
+      <div class="meta-small mt-2">If you provide a URL, it will be used when no uploaded file exists.</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function() {
+    const dragArea = document.getElementById('dragArea');
+    const fileInput = document.querySelector('input[type="file"][name$="image"]');
+    const preview = document.getElementById('previewImage');
+
+    if (!fileInput) return;
+
+    // Click on area opens file picker
+    dragArea.addEventListener('click', () => fileInput.click());
+
+    // Styling while dragging
+    ['dragenter','dragover'].forEach(e => {
+      dragArea.addEventListener(e, (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        dragArea.classList.add('dragover');
+      });
+    });
+    ['dragleave','drop'].forEach(e => {
+      dragArea.addEventListener(e, (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        dragArea.classList.remove('dragover');
+      });
+    });
+
+    // Drop handling
+    dragArea.addEventListener('drop', (ev) => {
+      const dt = ev.dataTransfer;
+      if (!dt || !dt.files || dt.files.length === 0) return;
+      const file = dt.files[0];
+      setFile(file);
+    });
+
+    // File select handling
+    fileInput.addEventListener('change', (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      if (file) setFile(file);
+    });
+
+    function setFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+      // preview
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        preview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+      // optional: small client-side size check
+      const maxBytes = 3 * 1024 * 1024;
+      if (file.size > maxBytes) {
+        const kb = Math.round(file.size / 1024);
+        const kbMax = Math.round(maxBytes / 1024);
+        if (!confirm(`Selected image is ${kb}KB which may be large. Continue?`)) {
+          fileInput.value = '';
+          return;
+        }
+      }
+      // attach file to file input (already from picker or drop events)
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+    }
+
+    // keyboard accessibility
+    dragArea.addEventListener('keypress', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fileInput.click(); }
+    });
+  })();
+</script>
+{% endblock %}

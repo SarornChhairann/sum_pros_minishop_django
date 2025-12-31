@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+
+{% block title %}MiniShop - Home{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    {% if products %}
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card">
+            <!-- Image Container -->
+            <div class="product-image-wrapper">
+                {% if product.image_url_or_file %}
+                <img src="{{ product.image_url_or_file }}" alt="{{ product.name }}" class="product-image">
+                {% else %}
+                <div class="product-image placeholder">
+                    <i class="bi bi-image"></i>
+                </div>
+                {% endif %}
+                
+                <div class="image-overlay"></div>
+                
+                <!-- Stock badge placed on image (bottom-left) -->
+                <span class="badge badge-stock stock-on-image">
+                    {% if product.stock is not None and product.stock|add:'0' != '0' %}
+                        {{ product.stock }} left
+                    {% else %}
+                        {% if product.is_available %}In Stock{% else %}Out of Stock{% endif %}
+                    {% endif %}
+                </span>
+                
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-btn wishlist-btn{% if user.is_authenticated and product.id in user_wishlist_product_ids %} active{% endif %}" data-id="{{ product.id }}" data-url="{% url 'add_to_wishlist' product.id %}">
+                        <i class="bi {% if user.is_authenticated and product.id in user_wishlist_product_ids %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                    </button>
+                    <button class="action-btn quickview-btn"
+                            data-url="{% url 'product_detail' product.id %}">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+            
+                <!-- Card Body -->
+            <div class="card-body">
+                
+                <div class="product-meta">
+                    <div class="product-header">
+                        <h3 class="product-title">{{ product.name }}</h3>
+                        <div class="price-display">
+                            <span class="price-value">${{ product.price }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="product-description">{{ product.description|truncatechars:100 }}</p>
+                
+                <!-- Rating -->
+                <div class="rating">
+                    <div class="stars">
+                        <!-- If you add rating to your model, update this -->
+                        <i class="bi bi-star-fill star"></i>
+                        <i class="bi bi-star-fill star"></i>
+                        <i class="bi bi-star-fill star"></i>
+                        <i class="bi bi-star-fill star"></i>
+                        <i class="bi bi-star empty"></i>
+                    </div>
+                    <span class="review-count">(0)</span>
+                </div>
+                
+                <!-- Product meta: move price next to name for easier scanning -->
+                <div class="product-meta">
+                    <div class="price-display">
+                        <span class="price-value">${{ product.price }}</span>
+                    </div>
+                </div>
+                
+                <!-- Add to Cart Section -->
+                <div class="add-to-cart-section">
+                    {% if product.is_available %}
+                    <form method="post" action="{% url 'add_to_cart' product.id %}" class="add-to-cart-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <div class="qty-selector">
+                            <button type="button" class="qty-btn minus" data-id="{{ product.id }}">-</button>
+                            <input type="number" name="quantity" class="qty-input" id="qty-{{ product.id }}" value="1" min="1" max="{{ product.stock }}">
+                            <button type="button" class="qty-btn plus" data-id="{{ product.id }}">+</button>
+                        </div>
+                        <button type="submit" class="add-to-cart-btn">
+                            <i class="bi bi-cart-plus"></i>
+                            Add to Cart
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="add-to-cart-btn" disabled style="width: 100%; opacity: 0.7;">
+                        <i class="bi bi-x-circle"></i>
+                        Out of Stock
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        {% if query %}
+        <div class="text-center py-5">
+            <div class="empty-state-icon mb-4">
+                <i class="bi bi-search" style="font-size:4rem;color:#e6e6e6;"></i>
+            </div>
+            <h3 class="mb-3">No results for "{{ query }}"</h3>
+            <p class="text-muted mb-4">We couldn't find any products matching your search. Try different keywords or clear the search to see all products.</p>
+            <div class="d-flex justify-content-center gap-2">
+                <a href="{% url 'home' %}" class="btn btn-outline-primary">Clear Search</a>
+                <a href="{% url 'products' %}" class="btn btn-primary">Browse Products</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <div class="empty-state-icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <h3 class="mt-4 text-white">No Products Available</h3>
+            <p class="text-white mb-4">Check back soon for new products!</p>
+        </div>
+        {% endif %}
+    {% endif %}
+    
+</div>
+
+<!-- Global toasts handled by base.html -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Wishlist functionality (POST -> add to DB; handles anonymous via JSON 401)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    document.querySelectorAll('.wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const url = this.dataset.url;
+            const icon = this.querySelector('i');
+            const self = this;
+
+            if (!url) return;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json',
+                },
+                credentials: 'same-origin'
+            }).then(async response => {
+                let data = {};
+                try { data = await response.json(); } catch (e) { /* ignore */ }
+
+                if (response.status === 401 || data.login_required) {
+                    // Redirect to login (preserve next)
+                    const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
+                    window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    return;
+                }
+
+                if (response.ok && data.success) {
+                    if (data.created) {
+                        self.classList.add('active');
+                        icon.classList.replace('bi-heart', 'bi-heart-fill');
+                        showToast('Added to Wishlist', 'Product saved to your wishlist');
+                    } else {
+                        // already in wishlist -> toggle visual
+                        self.classList.add('active');
+                        icon.classList.replace('bi-heart', 'bi-heart-fill');
+                        showToast('Already in Wishlist', 'This product is already in your wishlist');
+                    }
+
+                    // Update wishlist navbar badge (create/remove if needed)
+                    const badge = document.querySelector('.badge-count.wishlist-count');
+                    if (typeof data.wishlist_count !== 'undefined') {
+                        const count = parseInt(data.wishlist_count) || 0;
+                        if (badge) {
+                            if (count > 0) {
+                                badge.textContent = count;
+                            } else {
+                                badge.remove();
+                            }
+                        } else if (count > 0) {
+                            const wishlistIcon = document.querySelector('a[href*="wishlist"]');
+                            if (wishlistIcon) {
+                                const span = document.createElement('span');
+                                span.className = 'badge-count wishlist-count';
+                                span.textContent = count;
+                                wishlistIcon.appendChild(span);
+                            }
+                        }
+                    }
+                } else {
+                    showToast('Wishlist Error', data.error || 'Could not update wishlist');
+                }
+            }).catch(err => {
+                showToast('Network Error', 'Unable to reach server');
+            });
+        });
+    });
+
+    // Quick view functionality
+    document.querySelectorAll('.quickview-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            window.location.href = this.dataset.url;
+        });
+    });
+
+    // Quantity controls
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.id;
+            const input = document.getElementById(`qty-${productId}`);
+            const max = parseInt(input.max);
+            const min = parseInt(input.min);
+            let value = parseInt(input.value) || min;
+            
+            if (this.classList.contains('plus') && value < max) {
+                input.value = value + 1;
+            } else if (this.classList.contains('minus') && value > min) {
+                input.value = value - 1;
+            }
+        });
+    });
+
+    // Quantity input validation
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const max = parseInt(this.max);
+            const min = parseInt(this.min);
+            let value = parseInt(this.value) || min;
+            
+            if (value < min) {
+                this.value = min;
+            } else if (value > max) {
+                this.value = max;
+                showToast('Maximum Reached', `Only ${max} items available in stock`);
+            }
+        });
+    });
+
+    // Intercept add-to-cart forms and submit via AJAX to avoid page reload
+    document.querySelectorAll('.add-to-cart-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('.add-to-cart-btn');
+            if (submitBtn) {
+                submitBtn.classList.add('adding');
+            }
+
+            const url = this.action;
+            const formData = new FormData(this);
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken,
+                    'Accept': 'application/json'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            }).then(async response => {
+                let data = {};
+                try { data = await response.json(); } catch (e) {}
+
+                if (submitBtn) submitBtn.classList.remove('adding');
+
+                if (response.status === 401 || data.login_required) {
+                    const loginUrl = (data && data.login_url) ? data.login_url : '/accounts/login/';
+                    window.location.href = loginUrl + '?next=' + encodeURIComponent(window.location.pathname + window.location.search);
+                    return;
+                }
+
+                if (response.ok && data.success) {
+                    // Update navbar cart badge
+                    const badge = document.querySelector('.badge-count.cart-count');
+                    if (badge) {
+                        badge.textContent = data.cart_count;
+                    } else if (data.cart_count && data.cart_count > 0) {
+                        // create badge if missing
+                        const cartIcon = document.querySelector('a[href*="cart"]');
+                        if (cartIcon) {
+                            const span = document.createElement('span');
+                            span.className = 'badge-count cart-count';
+                            span.textContent = data.cart_count;
+                            cartIcon.appendChild(span);
+                        }
+                    }
+
+                    // Optionally update any cart total display
+                    showToast('Added to cart', `${formData.get('quantity') || 1} item(s) added`, 'success');
+                } else {
+                    showToast('Add to cart failed', data.error || 'Could not add item', 'danger');
+                }
+            }).catch(err => {
+                if (submitBtn) submitBtn.classList.remove('adding');
+                showToast('Network Error', 'Unable to reach server', 'danger');
+            });
+        });
+    });
+
+});
+</script>
+{% endblock %}

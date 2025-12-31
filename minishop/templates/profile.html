@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - MiniShop{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-3">Profile</h3>
+          <p><strong>Username:</strong> {{ user.username }}</p>
+          <p><strong>Email:</strong> {{ user.email|default:'—' }}</p>
+          <a href="{% url 'home' %}" class="btn btn-outline-secondary mt-3">Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

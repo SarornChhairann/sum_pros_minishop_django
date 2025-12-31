@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center py-5">
+    <div class="display-1 text-success mb-4">
+        <i class="bi bi-check-circle"></i>
+    </div>
+    <h1 class="mb-4">Order Confirmed!</h1>
+    <div class="card mx-auto" style="max-width: 500px;">
+        <div class="card-body">
+            <h5 class="card-title">Order #{{ order.id }}</h5>
+            <div class="text-start">
+                <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                <p><strong>Email:</strong> {{ order.customer_email }}</p>
+                <p><strong>Phone:</strong> {{ order.customer_phone }}</p>
+                <p><strong>Shipping Address:</strong><br>{{ order.shipping_address }}</p>
+                <hr>
+                <h4 class="text-primary">Total: ${{ order.total_amount }}</h4>
+                <p class="text-muted">Order Date: {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="mt-4">
+        <a href="{% url 'home' %}" class="btn btn-primary">
+            Continue Shopping
+        </a>
+    </div>
+</div>
+{% endblock %}

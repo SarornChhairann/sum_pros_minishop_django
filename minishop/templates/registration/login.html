@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - MiniShop{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center py-5">
+    <div class="row w-100 justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+            <!-- Login Card -->
+            <div class="card login-card border-0 shadow-lg overflow-hidden" style="border-radius: 24px;">
+                <div class="row g-0">
+                    <!-- Left Side - Brand & Illustration -->
+                    <div class="col-lg-6 d-none d-lg-flex bg-gradient-primary p-5">
+                        <div class="w-100 d-flex flex-column justify-content-center">
+                            <!-- Brand -->
+                            <div class="text-center mb-5">
+                                <div class="brand-logo mb-4">
+                                    <i class="bi bi-shop" style="font-size: 3rem; color: white;"></i>
+                                </div>
+                                <h2 class="text-white mb-2">Welcome Back</h2>
+                                <p class="text-white opacity-75">Sign in to your MiniShop account</p>
+                            </div>
+                            
+                            <!-- Illustration -->
+                            <div class="text-center">
+                                <div class="illustration-container mb-4">
+                                    <i class="bi bi-person-circle" style="font-size: 8rem; color: rgba(255,255,255,0.9);"></i>
+                                </div>
+                                
+                                <!-- Features List -->
+                                <div class="features-list text-start">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-check-circle-fill text-white me-3" style="font-size: 1.2rem;"></i>
+                                        <span class="text-white">Fast checkout</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-check-circle-fill text-white me-3" style="font-size: 1.2rem;"></i>
+                                        <span class="text-white">Track your orders</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-check-circle-fill text-white me-3" style="font-size: 1.2rem;"></i>
+                                        <span class="text-white">Personalized recommendations</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side - Login Form -->
+                    <div class="col-lg-6">
+                        <div class="card-body p-5">
+                            <!-- Mobile Brand -->
+                            <div class="text-center mb-4 d-lg-none">
+                                <div class="brand-logo mb-3">
+                                    <i class="bi bi-shop text-primary" style="font-size: 2.5rem;"></i>
+                                </div>
+                                <h3 class="mb-2">Welcome Back</h3>
+                                <p class="text-muted">Sign in to your account</p>
+                            </div>
+                            
+                            <!-- Form -->
+                            <form method="post" action="{% url 'login' %}" class="login-form" id="loginForm">
+                                {% csrf_token %}
+                                
+                                <!-- Error Messages -->
+                                {% if form.errors %}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    Invalid username or password. Please try again.
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endif %}
+                                
+                                {% if messages %}
+                                {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                                {% endfor %}
+                                {% endif %}
+                                
+                                <!-- Username Field -->
+                                <div class="form-group mb-4">
+                                    <label for="id_username" class="form-label fw-semibold">
+                                        <i class="bi bi-person me-2"></i>Username or Email
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-person text-muted"></i>
+                                        </span>
+                                             <input type="text" name="username" id="id_username"
+                                                 class="form-control border-start-0"
+                                                 value="{{ request.POST.username|default:'' }}"
+                                                 aria-label="Username or email">
+                                    </div>
+                                    <div class="form-text">Enter your username or email address</div>
+                                </div>
+                                
+                                <!-- Password Field -->
+                                <div class="form-group mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="id_password" class="form-label fw-semibold">
+                                            <i class="bi bi-lock me-2"></i>Password
+                                        </label>
+                                        <a href="{% url 'password_reset' %}" class="text-decoration-none text-primary small">
+                                            Forgot password?
+                                        </a>
+                                    </div>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent border-end-0">
+                                            <i class="bi bi-key text-muted"></i>
+                                        </span>
+                                             <input type="password" name="password" id="id_password"
+                                                 class="form-control border-start-0 border-end-0"
+                                                 aria-label="Password">
+                                        <button class="btn btn-outline-secondary border-start-0" type="button" id="togglePassword">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Remember Me -->
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" name="remember" id="rememberMe">
+                                    <label class="form-check-label" for="rememberMe">
+                                        Remember me
+                                    </label>
+                                </div>
+                                
+                                <!-- Next Parameter -->
+                                {% if next %}
+                                <input type="hidden" name="next" value="{{ next }}">
+                                {% endif %}
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid mb-4">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+                                        <span class="btn-text">Sign In</span>
+                                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Social Login (Optional) -->
+                                <div class="text-center mb-4">
+                                    <div class="divider">
+                                        <span class="divider-text">or continue with</span>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-center gap-3">
+                                        <button type="button" class="btn btn-outline-secondary btn-icon" disabled>
+                                            <i class="bi bi-google"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-icon" disabled>
+                                            <i class="bi bi-facebook"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-icon" disabled>
+                                            <i class="bi bi-github"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Sign Up Link -->
+                                <div class="text-center">
+                                    <p class="mb-0">
+                                        Don't have an account?
+                                        <a href="{% url 'register' %}" class="text-decoration-none fw-semibold text-primary">
+                                            Create one now
+                                        </a>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Back to Home -->
+            <div class="text-center mt-4">
+                <a href="{% url 'home' %}" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left me-2"></i>Back to homepage
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+    }
+    
+    .login-card {
+        animation: slideUp 0.6s ease-out;
+        overflow: hidden;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-control {
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .input-group-text {
+        border-radius: 12px 0 0 12px !important;
+        border: 2px solid #e2e8f0;
+        border-right: none;
+        background: var(--light);
+    }
+    
+    #togglePassword {
+        border-radius: 0 12px 12px 0 !important;
+        border: 2px solid #e2e8f0;
+        border-left: none;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .btn-primary::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 5px;
+        height: 5px;
+        background: rgba(255, 255, 255, 0.5);
+        opacity: 0;
+        border-radius: 100%;
+        transform: scale(1, 1) translate(-50%);
+        transform-origin: 50% 50%;
+    }
+    
+    .btn-primary:focus:not(:active)::after {
+        animation: ripple 1s ease-out;
+    }
+    
+    @keyframes ripple {
+        0% {
+            transform: scale(0, 0);
+            opacity: 0.5;
+        }
+        100% {
+            transform: scale(20, 20);
+            opacity: 0;
+        }
+    }
+    
+    .btn-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-icon:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+    }
+    
+    .divider::before,
+    .divider::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .divider-text {
+        padding: 0 1rem;
+        color: #94a3b8;
+        font-size: 0.875rem;
+    }
+    
+    .form-check-input {
+        width: 1.2em;
+        height: 1.2em;
+        border-radius: 4px;
+        border: 2px solid #e2e8f0;
+        margin-top: 0.2em;
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    .illustration-container {
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .features-list {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .login-card {
+            margin: 1rem;
+        }
+        
+        .card-body {
+            padding: 2rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password visibility toggle
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInputId = document.getElementById('id_password');
+    
+    if (togglePassword && passwordInputId) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInputId.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInputId.setAttribute('type', type);
+            
+            // Toggle icon
+            const icon = this.querySelector('i');
+            if (type === 'password') {
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            } else {
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            }
+        });
+    }
+    
+    // Form submission with loading state
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', function(e) {
+            // Show loading state
+            const btnText = loginBtn.querySelector('.btn-text');
+            const spinner = loginBtn.querySelector('.spinner-border');
+            
+            if (btnText && spinner) {
+                btnText.textContent = 'Signing in...';
+                btnText.classList.add('d-none');
+                spinner.classList.remove('d-none');
+                loginBtn.disabled = true;
+            }
+            
+            // Add a small delay to show loading state
+            setTimeout(() => {
+                if (btnText && spinner) {
+                    btnText.classList.remove('d-none');
+                    spinner.classList.add('d-none');
+                    btnText.textContent = 'Sign In';
+                    loginBtn.disabled = false;
+                }
+            }, 2000);
+        });
+    }
+    
+    // Form field focus effects
+    const formInputs = document.querySelectorAll('.form-control');
+    formInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('focused');
+        });
+    });
+    
+    // Add classes to Django form inputs
+    const usernameInput = document.getElementById('id_username');
+    const passwordInput = document.getElementById('id_password');
+    
+    if (usernameInput) {
+        usernameInput.className = 'form-control border-start-0';
+        usernameInput.placeholder = 'Enter your username or email';
+    }
+    
+    if (passwordInput) {
+        passwordInput.className = 'form-control border-start-0 border-end-0';
+        passwordInput.placeholder = 'Enter your password';
+    }
+    
+    // Auto-focus on username field
+    if (usernameInput) {
+        setTimeout(() => {
+            usernameInput.focus();
+        }, 300);
+    }
+    
+    // Add ripple effect to login button
+    loginBtn.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const ripple = document.createElement('span');
+        ripple.style.position = 'absolute';
+        ripple.style.borderRadius = '50%';
+        ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+        ripple.style.transform = 'scale(0)';
+        ripple.style.animation = 'ripple 0.6s linear';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + Enter to submit form
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            loginForm.requestSubmit();
+        }
+        
+        // Escape to clear form
+        if (e.key === 'Escape') {
+            loginForm.reset();
+        }
+    });
+});
+</script>
+{% endblock %}
