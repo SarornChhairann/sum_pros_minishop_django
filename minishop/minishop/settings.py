@@ -102,6 +102,25 @@ LOCALE_PATHS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Conditional Cloudinary setup
+if os.environ.get('VERCEL', '').lower() == 'true' or os.environ.get('USE_CLOUDINARY', '').lower() == 'true':
+    # Cloudinary configuration for production
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+        'SECURE': True,
+    }
+    
+    # Storage settings
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    # Update media settings for Cloudinary
+    MEDIA_URL = '/media/'  # Cloudinary serves from their CDN
+else:
+    # Local development with Pillow
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'

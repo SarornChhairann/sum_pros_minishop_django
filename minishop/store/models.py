@@ -1,6 +1,16 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.contrib.auth.models import User
+import os
+
+# Conditionally import Cloudinary based on environment
+if os.environ.get('VERCEL', '').lower() == 'true' or os.environ.get('USE_CLOUDINARY', '').lower() == 'true':
+    from cloudinary.models import CloudinaryField
+    USE_CLOUDINARY = True
+else:
+    from django.db.models import ImageField
+    USE_CLOUDINARY = False
+
 
 class Product(models.Model):
     STATUS_CHOICES = [
@@ -12,7 +22,13 @@ class Product(models.Model):
     description = models.TextField(max_length=500, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.IntegerField(validators=[MinValueValidator(0)])
-    image = models.ImageField(upload_to='products/', blank=True, null=True)
+    
+    # Dynamic field based on environment
+    if USE_CLOUDINARY:
+        image = CloudinaryField('image', folder='products/', blank=True, null=True)
+    else:
+        image = models.ImageField(upload_to='products/', blank=True, null=True)
+    
     image_url = models.URLField(max_length=255, blank=True)  # legacy/optional
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -26,11 +42,28 @@ class Product(models.Model):
 
     @property
     def image_url_or_file(self):
-        if self.image:
+        # For Cloudinary
+        if USE_CLOUDINARY and self.image:
+            try:
+                # Get optimized URL with transformations
+                return self.image.build_url(
+                    width=600,
+                    height=600,
+                    crop="fill",
+                    quality="auto",
+                    fetch_format="auto"
+                )
+            except:
+                return str(self.image)
+        
+        # For local/Pillow
+        if not USE_CLOUDINARY and self.image:
             try:
                 return self.image.url
             except ValueError:
                 return ''
+        
+        # Fallback to image_url
         return self.image_url or ''
 
 class Order(models.Model):
